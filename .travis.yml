@@ -1,0 +1,37 @@
+dist: trusty
+sudo: false
+
+language: python
+cache: pip
+
+matrix:
+  include:
+    - env: TOXENV=py34
+      python: '3.4'
+    - env: TOXENV=py35
+      python: '3.5'
+    - env: TOXENV=py36
+      python: '3.6'
+    - env: TOXENV=pypy3
+      python: 'pypy3'
+    - env: TOXENV=metadata
+      python: '3.6'
+    - env: TOXENV=pep8
+      python: '3.6'
+
+install:
+  - pip install tox codecov
+
+script:
+  - tox
+
+after_success:
+  - codecov --env TOXENV
+
+deploy:
+  - provider: pypi
+    on:
+      tags: true
+      distributions: bdist_wheel sdist
+    user: ikalnytskyi
+    password: $PYPI_PASSWORD
