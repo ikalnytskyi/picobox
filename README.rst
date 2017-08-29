@@ -69,5 +69,6 @@ and then
 Links
 -----
 
+* Documentation: https://picobox.readthedocs.io
 * Source: https://github.com/ikalnytskyi/picobox
 * Bugs: https://github.com/ikalnytskyi/picobox/issues
