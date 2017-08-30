@@ -21,6 +21,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 # -- HTML output
 html_use_index = False
 html_show_sourcelink = False
+html_logo = '_static/picobox.svg'
 
 if not os.environ.get('READTHEDOCS') == 'True':
     import sphinx_rtd_theme
