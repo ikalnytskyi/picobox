@@ -20,6 +20,31 @@ _missing = _missing()
 
 
 class Box(object):
+    """Box is a dependency injection (DI) container.
+
+    DI container is an object that contains any amount of factories, one for
+    each dependency apart. Dependency, on the other hand, is an ordinary
+    instance or value the container needs to provide on demand.
+
+    Thanks to scopes, the class keeps track of produced dependencies and knows
+    exactly when to reuse them or when to create new ones. That is to say each
+    scope defines a set of rules for when to reuse dependencies.
+
+    Here's a minimal example of how Box instance can be used::
+
+        import picobox
+
+        box = picobox.Box()
+        box.put('magic', 42)
+
+        @box.pass_('magic')
+        def do(magic):
+            return magic + 1
+
+        assert box.get('magic') == 42
+        assert do(13) == 14
+        assert do() == 43
+    """
 
     def __init__(self):
         self._store = {}
@@ -27,6 +52,25 @@ class Box(object):
         self._lock = threading.Lock()
 
     def put(self, key, value=_missing, factory=_missing, scope=_missing):
+        """Define a dependency (aka service) within the box instance.
+
+        A dependency can be expressed either directly, by passing a concrete
+        `value`, or via `factory` function. A `factory` may be accompanied by
+        `scope` that defines a set of rules for when to create a new dependency
+        instance and when to reuse existing one. If `scope` is not passed, no
+        scope is assumed which means produce a new instance each time it's
+        requested.
+
+        :param key: A key under which to put a dependency. Can be any hashable
+            object, but string is recommended.
+        :param value: A dependency to be stored within a box under `key` key.
+            Can be any object. A syntax sugar for ``factory=lambda: value``.
+        :param factory: A factory function to produce a dependency when needed.
+            Must be callable with no arguments.
+        :param scope: A scope to keep track of produced dependencies. Must be
+            a class that implements :class:`Scope` interface.
+        :raises ValueError: If both `value` and `factory` are passed.
+        """
         if value is not _missing \
                 and (factory is not _missing or scope is not _missing):
             raise ValueError(
@@ -66,6 +110,19 @@ class Box(object):
             self._store[key] = (scope, factory)
 
     def get(self, key, default=_missing):
+        """Retrieve a dependency (aka service) out of the box instance.
+
+        The process involves creation of requested dependency by calling an
+        associated `factory` function, and then returning result back to the
+        caller code. If a dependency is `scoped`, there's a chance for an
+        existing instance to be returned instead.
+
+        :param key: A key to retrieve a dependency. Must be the one used when
+            calling :meth:`.put` method.
+        :param default: (optional) A fallback value to be returned if there's
+            no `key` in the box. If not passed, `KeyError` is raised.
+        :raises KeyError: If no dependencies saved under `key` in the box.
+        """
         # If nothing was put into a box under "key", Box follows mapping
         # interface and raises KeyError, unless some default value has been
         # passed as the fallback value.
@@ -93,6 +150,20 @@ class Box(object):
         return value
 
     def pass_(self, key, as_=_missing):
+        """Pass a dependency to a function if nothing explicitly passed.
+
+        The decorator implements late binding which means it does not require
+        to have a dependency instance in the box before applying. The instance
+        will be looked up when a decorated function is called. Other important
+        property is that it doesn't change a signature of decorated function
+        preserving a way to explicitly pass arguments ignoring injections.
+
+        :param key: A key to retrieve a dependency. Must be the one used when
+            calling :meth:`.put` method.
+        :parameter as\_: (optional) Bind a dependency associated with `key` to
+            a function argument named `as_`. If not passed, the same as `key`.
+        :raises KeyError: If no dependencies saved under `key` in the box.
+        """
         def decorator(fn):
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):

@@ -5,17 +5,31 @@ import threading
 
 
 class Scope(metaclass=abc.ABCMeta):
+    """Scope is an execution context based storage interface.
+
+    Execution context is a mechanism of storing and accessing data bound to a
+    logical thread of execution. Thus, one may consider processes, threads,
+    greenlets, coroutines, Flask requests to be examples of a logical thread.
+
+    The interface provides just two methods:
+
+     * :meth:`.set` - set execution context item
+     * :meth:`.get` - get execution context item
+
+    See corresponding methods for details below.
+    """
 
     @abc.abstractmethod
     def set(self, key, value):
-        pass
+        """Bind `value` to `key` in current execution context."""
 
     @abc.abstractmethod
     def get(self, key):
-        pass
+        """Get `value` by `key` for current execution context."""
 
 
 class singleton(Scope):
+    """Share instances across application."""
 
     def __init__(self):
         self._store = {}
@@ -28,6 +42,7 @@ class singleton(Scope):
 
 
 class threadlocal(Scope):
+    """Share instances across the same thread."""
 
     def __init__(self):
         self._store = threading.local()
@@ -44,6 +59,7 @@ class threadlocal(Scope):
 
 
 class noscope(Scope):
+    """Do not share instances, create them each time on demand."""
 
     def set(self, key, value):
         pass
