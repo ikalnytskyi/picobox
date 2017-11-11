@@ -21,8 +21,8 @@ no type bindings – just picoboxes, and explicit demands!
 Why?
 ----
 
-Because we usually want to decouple our code base and Python lack of clean
-and pragmatic solutions (even as third parties).
+Because we usually want to decouple our code and Python lack of clean and
+pragmatic solutions (even third parties).
 
 
 Features
