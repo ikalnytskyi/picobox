@@ -10,6 +10,9 @@ Picobox
 .. image:: https://codecov.io/gh/ikalnytskyi/picobox/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/ikalnytskyi/picobox
 
+.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
+   :target: https://saythanks.io/to/ikalnytskyi
+
 Picobox is opinionated dependency injection framework designed to be clean,
 pragmatic and with Python in mind. No complex graphs, no implicit injections,
 no type bindings – just picoboxes, and explicit demands!
