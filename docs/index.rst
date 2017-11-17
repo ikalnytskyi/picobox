@@ -206,3 +206,38 @@ not a solution.
         with picobox.push(picobox.Box()) as box:
             box.put('foo', 42)
             assert spam() == 42
+
+
+API reference
+-------------
+
+.. module:: picobox
+
+Box
+```
+
+.. autoclass:: Box
+    :members: put, get, pass_
+
+Scopes
+``````
+
+.. autoclass:: Scope
+    :members: set, get
+
+.. autodata:: singleton
+    :annotation:
+
+.. autodata:: threadlocal
+    :annotation:
+
+.. autodata:: noscope
+    :annotation:
+
+Stacked API
+```````````
+
+.. autofunction:: push
+.. autofunction:: put
+.. autofunction:: get
+.. autofunction:: pass_

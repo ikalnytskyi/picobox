@@ -30,6 +30,32 @@ _topbox = _topbox()
 
 
 class push:
+    """Context manager to push a :class:`Box` instance to the top of the stack.
+
+    The box on the top is used by :func:`put`, :func:`get` and :func:`pass_`
+    functions (not methods) and together they define a so called Picobox's
+    stacked interface. The idea behind stacked interface is to provide a way
+    to easily switch DI containers (boxes) without changing injections.
+
+    Here's a minimal example of how push can be used::
+
+        import picobox
+
+        @picobox.pass_('magic')
+        def do(magic):
+            return magic + 1
+
+        foobox = picobox.Box()
+        foobox.put('magic', 42)
+
+        barbox = picobox.Box()
+        barbox.put('magic', 13)
+
+        with picobox.push(foobox):
+            with picobox.push(barbox):
+                assert do() == 14
+            assert do() == 43
+    """
 
     def __init__(self, box):
         self._lock = threading.Lock()
@@ -61,14 +87,17 @@ def _wraps(method):
 
 @_wraps(Box.put)
 def put(*args, **kwargs):
+    """The same as :meth:`Box.put` but for a box at the top of the stack."""
     return Box.put(_topbox, *args, **kwargs)
 
 
 @_wraps(Box.get)
 def get(*args, **kwargs):
+    """The same as :meth:`Box.get` but for a box at the top of the stack."""
     return Box.get(_topbox, *args, **kwargs)
 
 
 @_wraps(Box.pass_)
 def pass_(*args, **kwargs):
+    """The same as :meth:`Box.pass_` but for a box at the top of the stack."""
     return Box.pass_(_topbox, *args, **kwargs)
