@@ -18,7 +18,9 @@ setuptools.setup(
     author='Ihor Kalnytskyi',
     author_email='ihor@kalnytskyi.com',
     packages=setuptools.find_packages(exclude=['docs', 'tests*']),
-    use_scm_version=True,
+    use_scm_version={
+        'root': here,
+    },
     setup_requires=[
         'setuptools_scm',
     ],
