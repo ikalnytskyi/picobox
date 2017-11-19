@@ -17,7 +17,8 @@ setuptools.setup(
     license='MIT',
     author='Ihor Kalnytskyi',
     author_email='ihor@kalnytskyi.com',
-    packages=setuptools.find_packages(exclude=['docs', 'tests*']),
+    packages=setuptools.find_packages(where='src'),
+    package_dir={'': 'src'},
     use_scm_version={
         'root': here,
     },
