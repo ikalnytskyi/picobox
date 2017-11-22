@@ -49,7 +49,7 @@ class Box(object):
     def __init__(self):
         self._store = {}
         self._scope_instances = {}
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def put(self, key, value=_missing, factory=_missing, scope=_missing):
         """Define a dependency (aka service) within the box instance.

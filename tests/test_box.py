@@ -97,6 +97,19 @@ def test_box_put_factory_custom_scope():
     assert len(set(map(id, objects))) == 2
 
 
+def test_box_put_factory_dependency():
+    testbox = picobox.Box()
+
+    @testbox.pass_('a')
+    def fn(a):
+        return a + 1
+
+    testbox.put('a', 13)
+    testbox.put('b', factory=fn)
+
+    assert testbox.get('b') == 14
+
+
 def test_box_put_value_and_factory():
     testbox = picobox.Box()
 
