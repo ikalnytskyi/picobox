@@ -68,6 +68,20 @@ def test_box_put_factory_singleton_scope():
     assert len(set(map(id, objects))) == 1
 
 
+def test_box_put_factory_dependency():
+    testbox = picobox.Box()
+
+    @picobox.pass_('a')
+    def fn(a):
+        return a + 1
+
+    with picobox.push(testbox):
+        picobox.put('a', 13)
+        picobox.put('b', factory=fn)
+
+        assert picobox.get('b') == 14
+
+
 def test_box_put_value_and_factory():
     testbox = picobox.Box()
 
