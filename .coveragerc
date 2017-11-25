@@ -1,6 +1,12 @@
 [run]
 branch = true
+parallel = true
 source = picobox
+
+[paths]
+source =
+   src/
+   */site-packages/
 
 [report]
 exclude_lines =
