@@ -185,3 +185,54 @@ class Box(object):
                 return fn(*args, **kwargs)
             return wrapper
         return decorator
+
+
+class ChainBox(Box):
+    """ChainBox groups multiple boxes together to create a single view.
+
+    ChainBox for boxes is essentially the same as
+    :class:`~collections.ChainMap` for mappings. It mimics :class:`Box`
+    interface and hence can substitute one but provides a way to look up
+    dependencies in underlying boxes.
+
+    Here's a minimal example of how ChainBox instance can be used::
+
+        box_a = picobox.Box()
+        box_a.put('magic_a', 42)
+
+        box_b = picobox.Box()
+        box_b.put('magic_a', factory=lambda: 10)
+        box_b.put('magic_b', factory=lambda: 13)
+
+        chainbox = picobox.ChainBox(box_a, box_b)
+
+        @chainbox.pass_('magic_a')
+        @chainbox.pass_('magic_b')
+        def do(magic_a, magic_b):
+            return magic_a + magic_b
+
+        assert chainbox.get('magic_b') == 13
+        assert do() == 55
+
+    :param boxes: (optional) A list of boxes to lookup into. If no boxes are
+        passed, an empty box is created and used as underlying box instead.
+    """
+
+    def __init__(self, *boxes):
+        self._boxes = boxes or [Box()]
+
+    def put(self, key, value=_missing, factory=_missing, scope=_missing):
+        """Same as :meth:`Box.put` but applies to first underlying box."""
+        return self._boxes[0].put(key, value, factory, scope)
+
+    def get(self, key, default=_missing):
+        """Same as :meth:`Box.get` but looks up for key in underlying boxes."""
+        for box in self._boxes:
+            try:
+                return box.get(key)
+            except KeyError:
+                pass
+
+        if default is _missing:
+            raise KeyError(key)
+        return default

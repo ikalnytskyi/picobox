@@ -88,13 +88,13 @@ def _wraps(method):
 @_wraps(Box.put)
 def put(*args, **kwargs):
     """The same as :meth:`Box.put` but for a box at the top of the stack."""
-    return Box.put(_topbox, *args, **kwargs)
+    return _topbox.put(*args, **kwargs)
 
 
 @_wraps(Box.get)
 def get(*args, **kwargs):
     """The same as :meth:`Box.get` but for a box at the top of the stack."""
-    return Box.get(_topbox, *args, **kwargs)
+    return _topbox.get(*args, **kwargs)
 
 
 @_wraps(Box.pass_)
