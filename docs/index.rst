@@ -241,3 +241,14 @@ Stacked API
 .. autofunction:: put
 .. autofunction:: get
 .. autofunction:: pass_
+
+
+Release Notes
+-------------
+
+1.0.0
+`````
+
+Released on Nov 25, 2017.
+
+* First public release with initial bunch of features.
