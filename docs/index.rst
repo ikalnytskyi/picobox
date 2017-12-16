@@ -195,6 +195,29 @@ general methods that will be applied to latest active box instance.
 
     spam()                          # RuntimeError: no boxes on the stack
 
+When only partial overriding is necessary, you can chain pushed box so any
+missed lookups will be proxied to the box one level down the stack.
+
+.. code:: python
+
+    import picobox
+
+    @picobox.pass_('foo')
+    @picobox.pass_('bar')
+    def spam(foo, bar):
+        return foo + bar
+
+    box_a = picobox.Box()
+    box_a.put('foo', 13)
+    box_a.put('bar', 42)
+
+    box_b = picobox.Box()
+    box_b.put('bar', 0)
+
+    with picobox.push(box_a):
+        with picobox.push(box_b, chain=True):
+            print(spam())           # 13
+
 The stack interface is recommended way to use Picobox because it allows to
 switch between DI containers (boxes) on the fly. This is also the only way to
 test your application because patching (mocking) globally defined boxes is
@@ -203,7 +226,7 @@ not a solution.
 .. code:: python
 
     def test_spam():
-        with picobox.push(picobox.Box()) as box:
+        with picobox.push(picobox.Box(), chain=True) as box:
             box.put('foo', 42)
             assert spam() == 42
 
@@ -255,6 +278,9 @@ Release Notes
 * New ``ChainBox`` class that can be used similar to ``ChainMap`` but for
   boxes. This basically means from now on you can group few boxes into one
   view, and use that view to look up dependencies.
+
+* New ``picobox.push()`` argument called ``chain`` that can be used to look
+  up keys down the stack on misses.
 
 1.0.0
 `````
