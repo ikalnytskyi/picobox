@@ -1,9 +1,15 @@
 """Test picobox class."""
 
 import collections
+import inspect
 
 import pytest
 import picobox
+
+
+@pytest.fixture(params=[picobox.Box, picobox.ChainBox])
+def boxclass(request):
+    yield request.param
 
 
 @pytest.mark.parametrize('key', [
@@ -15,8 +21,8 @@ import picobox
     (1, None, True),
     object(),
 ])
-def test_box_put_key(key):
-    testbox = picobox.Box()
+def test_box_put_key(key, boxclass):
+    testbox = boxclass()
     testbox.put(key, 'the-value')
 
     assert testbox.get(key) == 'the-value'
@@ -35,15 +41,15 @@ def test_box_put_key(key):
     object(),
     lambda: 42,
 ])
-def test_box_put_value(value):
-    testbox = picobox.Box()
+def test_box_put_value(value, boxclass):
+    testbox = boxclass()
     testbox.put('the-key', value)
 
     assert testbox.get('the-key') is value
 
 
-def test_box_put_factory():
-    testbox = picobox.Box()
+def test_box_put_factory(boxclass):
+    testbox = boxclass()
     testbox.put('the-key', factory=object)
 
     objects = [testbox.get('the-key') for _ in range(10)]
@@ -52,8 +58,8 @@ def test_box_put_factory():
     assert len(set(map(id, objects))) == 10
 
 
-def test_box_put_factory_singleton_scope():
-    testbox = picobox.Box()
+def test_box_put_factory_singleton_scope(boxclass):
+    testbox = boxclass()
     testbox.put('the-key', factory=object, scope=picobox.singleton)
 
     objects = [testbox.get('the-key') for _ in range(10)]
@@ -62,7 +68,7 @@ def test_box_put_factory_singleton_scope():
     assert len(set(map(id, objects))) == 1
 
 
-def test_box_put_factory_custom_scope():
+def test_box_put_factory_custom_scope(boxclass):
     class namespacescope(picobox.Scope):
 
         def __init__(self):
@@ -74,7 +80,7 @@ def test_box_put_factory_custom_scope():
         def get(self, key):
             return self._store[namespace][key]
 
-    testbox = picobox.Box()
+    testbox = boxclass()
     testbox.put('the-key', factory=object, scope=namespacescope)
 
     objects = []
@@ -97,8 +103,8 @@ def test_box_put_factory_custom_scope():
     assert len(set(map(id, objects))) == 2
 
 
-def test_box_put_factory_dependency():
-    testbox = picobox.Box()
+def test_box_put_factory_dependency(boxclass):
+    testbox = boxclass()
 
     @testbox.pass_('a')
     def fn(a):
@@ -110,24 +116,24 @@ def test_box_put_factory_dependency():
     assert testbox.get('b') == 14
 
 
-def test_box_put_value_and_factory():
-    testbox = picobox.Box()
+def test_box_put_value_and_factory(boxclass):
+    testbox = boxclass()
 
     with pytest.raises(ValueError) as excinfo:
         testbox.put('the-key', 42, factory=object)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
 
 
-def test_box_put_value_and_scope():
-    testbox = picobox.Box()
+def test_box_put_value_and_scope(boxclass):
+    testbox = boxclass()
 
     with pytest.raises(ValueError) as excinfo:
         testbox.put('the-key', 42, scope=picobox.threadlocal)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
 
 
-def test_box_get_keyerror():
-    testbox = picobox.Box()
+def test_box_get_keyerror(boxclass):
+    testbox = boxclass()
 
     with pytest.raises(KeyError) as excinfo:
         testbox.get('the-key')
@@ -135,8 +141,8 @@ def test_box_get_keyerror():
     excinfo.match('the-key')
 
 
-def test_box_get_default():
-    testbox = picobox.Box()
+def test_box_get_default(boxclass):
+    testbox = boxclass()
     sentinel = object()
 
     assert testbox.get('the-key', sentinel) is sentinel
@@ -149,8 +155,8 @@ def test_box_get_default():
     ((),            {'a': 1, 'b': 2, 'c': 3},         6),
     ((),            {'b': 2, 'c': 3},                15),
 ])
-def test_box_pass_a(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_a(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('a', 10)
 
     @testbox.pass_('a')
@@ -168,8 +174,8 @@ def test_box_pass_a(args, kwargs, rv):
     ((),            {'a': 1, 'b': 2, 'c': 3},         6),
     ((),            {'a': 1, 'c': 3},                14),
 ])
-def test_box_pass_b(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_b(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('b', 10)
 
     @testbox.pass_('b')
@@ -188,8 +194,8 @@ def test_box_pass_b(args, kwargs, rv):
     ((),            {'a': 1, 'b': 2, 'c': 3},         6),
     ((),            {'a': 1, 'b': 2},                13),
 ])
-def test_box_pass_c(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_c(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('c', 10)
 
     @testbox.pass_('c')
@@ -208,8 +214,8 @@ def test_box_pass_c(args, kwargs, rv):
     ((),            {'a': 1, 'b': 2, 'c': 3},         6),
     ((),            {'a': 1, 'b': 2},                13),
 ])
-def test_box_pass_c_default(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_c_default(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('c', 10)
 
     @testbox.pass_('c')
@@ -229,8 +235,8 @@ def test_box_pass_c_default(args, kwargs, rv):
     ((),            {'b': 2, 'c': 3},                15),
     ((),            {'c': 3},                       113),
 ])
-def test_box_pass_ab(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_ab(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('a', 10)
     testbox.put('b', 100)
 
@@ -255,8 +261,8 @@ def test_box_pass_ab(args, kwargs, rv):
     ((),            {'a': 1, 'c': 3},                14),
     ((),            {'a': 1},                       111),
 ])
-def test_box_pass_bc(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_bc(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('b', 10)
     testbox.put('c', 100)
 
@@ -279,8 +285,8 @@ def test_box_pass_bc(args, kwargs, rv):
     ((),            {'b': 2, 'c': 3},                15),
     ((),            {'b': 2},                       112),
 ])
-def test_box_pass_ac(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_ac(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('a', 10)
     testbox.put('c', 100)
 
@@ -306,8 +312,8 @@ def test_box_pass_ac(args, kwargs, rv):
     ((),            {'a': 1},                      1101),
     ((),            {},                            1110),
 ])
-def test_box_pass_abc(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_abc(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('a', 10)
     testbox.put('b', 100)
     testbox.put('c', 1000)
@@ -329,8 +335,8 @@ def test_box_pass_abc(args, kwargs, rv):
     ((),            {'a': 1, 'b': 2, 'c': 3},         6),
     ((),            {'a': 1, 'c': 3},                14),
 ])
-def test_box_pass_d_as_b(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_d_as_b(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('d', 10)
 
     @testbox.pass_('d', as_='b')
@@ -345,8 +351,8 @@ def test_box_pass_d_as_b(args, kwargs, rv):
     ((),            {'x': 1},                         1),
     ((),            {},                              42),
 ])
-def test_box_pass_method(args, kwargs, rv):
-    testbox = picobox.Box()
+def test_box_pass_method(args, kwargs, rv, boxclass):
+    testbox = boxclass()
     testbox.put('x', 42)
 
     class Foo:
@@ -362,11 +368,11 @@ def test_box_pass_method(args, kwargs, rv):
     ((),            {'x': 0},                        41),
     ((),            {},                              42),
 ])
-def test_box_pass_key_type(args, kwargs, rv):
+def test_box_pass_key_type(args, kwargs, rv, boxclass):
     class key:
         pass
 
-    testbox = picobox.Box()
+    testbox = boxclass()
     testbox.put(key, 1)
 
     @testbox.pass_(key, as_='x')
@@ -376,8 +382,8 @@ def test_box_pass_key_type(args, kwargs, rv):
     assert fn(*args, **kwargs) == rv
 
 
-def test_box_pass_unexpected_argument():
-    testbox = picobox.Box()
+def test_box_pass_unexpected_argument(boxclass):
+    testbox = boxclass()
     testbox.put('d', 10)
 
     @testbox.pass_('d')
@@ -390,8 +396,8 @@ def test_box_pass_unexpected_argument():
     assert str(excinfo.value) == "fn() got an unexpected keyword argument 'd'"
 
 
-def test_box_pass_keyerror():
-    testbox = picobox.Box()
+def test_box_pass_keyerror(boxclass):
+    testbox = boxclass()
 
     @testbox.pass_('b')
     def fn(a, b):
@@ -401,3 +407,43 @@ def test_box_pass_keyerror():
         fn(1)
 
     excinfo.match('b')
+
+
+def test_chainbox_put_changes_box():
+    testbox = picobox.Box()
+    testchainbox = picobox.ChainBox(testbox)
+
+    with pytest.raises(KeyError):
+        testchainbox.get('the-key')
+    testchainbox.put('the-key', 42)
+
+    assert testbox.get('the-key') == 42
+
+
+def test_chainbox_get_chained():
+    testbox_a = picobox.Box()
+    testbox_a.put('the-key', 42)
+
+    testbox_b = picobox.Box()
+    testbox_b.put('the-key', 13)
+    testbox_b.put('the-pin', 12)
+
+    testchainbox = picobox.ChainBox(testbox_a, testbox_b)
+
+    assert testchainbox.get('the-key') == 42
+    assert testchainbox.get('the-pin') == 12
+
+
+def test_chainbox_isinstance_box():
+    assert isinstance(picobox.ChainBox(), picobox.Box)
+
+
+@pytest.mark.parametrize('name', [
+    name
+    for name, _ in inspect.getmembers(picobox.Box) if not name.startswith('_')
+])
+def test_chainbox_box_interface(name):
+    boxsignature = inspect.signature(getattr(picobox.Box(), name))
+    chainboxsignature = inspect.signature(getattr(picobox.ChainBox(), name))
+
+    assert boxsignature == chainboxsignature

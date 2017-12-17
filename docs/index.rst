@@ -217,7 +217,13 @@ Box
 ```
 
 .. autoclass:: Box
-    :members: put, get, pass_
+    :members:
+
+ChainBox
+````````
+
+.. autoclass:: ChainBox
+    :members:
 
 Scopes
 ``````
@@ -245,6 +251,10 @@ Stacked API
 
 Release Notes
 -------------
+
+* New ``ChainBox`` class that can be used similar to ``ChainMap`` but for
+  boxes. This basically means from now on you can group few boxes into one
+  view, and use that view to look up dependencies.
 
 1.0.0
 `````
