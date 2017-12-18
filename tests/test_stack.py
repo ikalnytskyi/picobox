@@ -152,20 +152,55 @@ def test_box_get_default(boxclass):
         assert picobox.get('the-key', sentinel) is sentinel
 
 
-def test_box_get_from_top(boxclass):
+@pytest.mark.parametrize('kwargs', [
+    {},
+    {'chain': False},
+])
+def test_box_get_from_top(boxclass, kwargs):
     testbox_a = boxclass()
-    testbox_b = boxclass()
-
     testbox_a.put('the-key', 'a')
+    testbox_a.put('the-pin', 'a')
+
+    testbox_b = boxclass()
     testbox_b.put('the-key', 'b')
 
     with picobox.push(testbox_a):
         assert picobox.get('the-key') == 'a'
+        assert picobox.get('the-pin') == 'a'
 
-        with picobox.push(testbox_b):
+        with picobox.push(testbox_b, **kwargs):
             assert picobox.get('the-key') == 'b'
 
+            with pytest.raises(KeyError):
+                picobox.get('the-pin')
+
         assert picobox.get('the-key') == 'a'
+        assert picobox.get('the-pin') == 'a'
+
+
+def test_box_get_from_top_chain(boxclass):
+    testbox_a = boxclass()
+    testbox_a.put('the-key', 'a')
+    testbox_a.put('the-pin', 'a')
+
+    testbox_b = boxclass()
+    testbox_b.put('the-key', 'b')
+
+    testbox_c = boxclass()
+    testbox_c.put('the-tip', 'c')
+
+    with picobox.push(testbox_a):
+        assert picobox.get('the-key') == 'a'
+        assert picobox.get('the-pin') == 'a'
+
+        with picobox.push(testbox_b, chain=True):
+            assert picobox.get('the-key') == 'b'
+            assert picobox.get('the-pin') == 'a'
+
+            with picobox.push(testbox_c, chain=True):
+                assert picobox.get('the-tip') == 'c'
+                assert picobox.get('the-key') == 'b'
+                assert picobox.get('the-pin') == 'a'
 
 
 def test_box_get_runtimeerror():

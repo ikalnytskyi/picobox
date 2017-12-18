@@ -3,7 +3,7 @@
 import threading
 import functools
 
-from ._box import Box
+from ._box import Box, ChainBox
 
 
 _stack = []
@@ -55,19 +55,28 @@ class push:
             with picobox.push(barbox):
                 assert do() == 14
             assert do() == 43
+
+    :param box: A :class:`Box` instance to push to the top of the stack.
+    :param chain: (optional) Look up missed keys one level down the stack. To
+        look up through multiple levels, each level must be created with this
+        option set to ``True``.
     """
 
-    def __init__(self, box):
+    def __init__(self, box, chain=False):
         self._lock = threading.Lock()
         self._box = box
+        self._chain = chain
 
     def __enter__(self):
         # Despite "list" is thread-safe in CPython (due to GIL), it's not
         # guaranteed by the language itself and may not be the case among
         # alternative implementations.
         with self._lock:
-            _stack.append(self._box)
-        return self._box
+            box = self._box
+            if self._chain and _stack:
+                box = ChainBox(box, _stack[-1])
+            _stack.append(box)
+        return box
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         # Despite "list" is thread-safe in CPython (due to GIL), it's not
