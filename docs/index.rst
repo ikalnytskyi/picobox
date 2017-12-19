@@ -275,6 +275,11 @@ Stacked API
 Release Notes
 -------------
 
+1.1.0
+`````
+
+Released on Dec 19, 2017.
+
 * New ``ChainBox`` class that can be used similar to ``ChainMap`` but for
   boxes. This basically means from now on you can group few boxes into one
   view, and use that view to look up dependencies.
