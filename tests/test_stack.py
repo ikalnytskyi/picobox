@@ -21,7 +21,7 @@ def boxclass(request):
 def test_box_put_key(key, boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         picobox.put(key, 'the-value')
 
     assert testbox.get(key) == 'the-value'
@@ -43,7 +43,7 @@ def test_box_put_key(key, boxclass):
 def test_box_put_value(value, boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         picobox.put('the-key', value)
 
     assert testbox.get('the-key') is value
@@ -52,7 +52,7 @@ def test_box_put_value(value, boxclass):
 def test_box_put_factory(boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         picobox.put('the-key', factory=object)
 
     objects = [testbox.get('the-key') for _ in range(10)]
@@ -64,7 +64,7 @@ def test_box_put_factory(boxclass):
 def test_box_put_factory_singleton_scope(boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         picobox.put('the-key', factory=object, scope=picobox.singleton)
 
     objects = [testbox.get('the-key') for _ in range(10)]
@@ -80,7 +80,7 @@ def test_box_put_factory_dependency(boxclass):
     def fn(a):
         return a + 1
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         picobox.put('a', 13)
         picobox.put('b', factory=fn)
 
@@ -90,7 +90,7 @@ def test_box_put_factory_dependency(boxclass):
 def test_box_put_value_and_factory(boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         with pytest.raises(ValueError) as excinfo:
             picobox.put('the-key', 42, factory=object)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
@@ -99,7 +99,7 @@ def test_box_put_value_and_factory(boxclass):
 def test_box_put_value_and_scope(boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         with pytest.raises(ValueError) as excinfo:
             picobox.put('the-key', 42, scope=picobox.threadlocal)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
@@ -110,7 +110,7 @@ def test_box_put_runtimeerror(boxclass):
         picobox.put('the-key', object())
 
     assert str(excinfo.value) == (
-        'No boxes found on stack, please use picobox.push() first.')
+        'No boxes found on stack, please use picobox.pushpop() first.')
 
 
 @pytest.mark.parametrize('value', [
@@ -130,14 +130,14 @@ def test_box_get_value(value, boxclass):
     testbox = boxclass()
     testbox.put('the-key', value)
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert picobox.get('the-key') is value
 
 
 def test_box_get_keyerror(boxclass):
     testbox = boxclass()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         with pytest.raises(KeyError) as excinfo:
             picobox.get('the-key')
 
@@ -148,7 +148,7 @@ def test_box_get_default(boxclass):
     testbox = boxclass()
     sentinel = object()
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert picobox.get('the-key', sentinel) is sentinel
 
 
@@ -164,11 +164,11 @@ def test_box_get_from_top(boxclass, kwargs):
     testbox_b = boxclass()
     testbox_b.put('the-key', 'b')
 
-    with picobox.push(testbox_a):
+    with picobox.pushpop(testbox_a):
         assert picobox.get('the-key') == 'a'
         assert picobox.get('the-pin') == 'a'
 
-        with picobox.push(testbox_b, **kwargs):
+        with picobox.pushpop(testbox_b, **kwargs):
             assert picobox.get('the-key') == 'b'
 
             with pytest.raises(KeyError):
@@ -189,15 +189,15 @@ def test_box_get_from_top_chain(boxclass):
     testbox_c = boxclass()
     testbox_c.put('the-tip', 'c')
 
-    with picobox.push(testbox_a):
+    with picobox.pushpop(testbox_a):
         assert picobox.get('the-key') == 'a'
         assert picobox.get('the-pin') == 'a'
 
-        with picobox.push(testbox_b, chain=True):
+        with picobox.pushpop(testbox_b, chain=True):
             assert picobox.get('the-key') == 'b'
             assert picobox.get('the-pin') == 'a'
 
-            with picobox.push(testbox_c, chain=True):
+            with picobox.pushpop(testbox_c, chain=True):
                 assert picobox.get('the-tip') == 'c'
                 assert picobox.get('the-key') == 'b'
                 assert picobox.get('the-pin') == 'a'
@@ -208,7 +208,7 @@ def test_box_get_runtimeerror():
         picobox.get('the-key')
 
     assert str(excinfo.value) == (
-        'No boxes found on stack, please use picobox.push() first.')
+        'No boxes found on stack, please use picobox.pushpop() first.')
 
 
 @pytest.mark.parametrize('args, kwargs, rv', [
@@ -226,7 +226,7 @@ def test_box_pass_a(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -246,7 +246,7 @@ def test_box_pass_b(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -267,7 +267,7 @@ def test_box_pass_c(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -288,7 +288,7 @@ def test_box_pass_c_default(args, kwargs, rv, boxclass):
     def fn(a, b, c=20):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -312,7 +312,7 @@ def test_box_pass_ab(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -339,7 +339,7 @@ def test_box_pass_bc(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -364,7 +364,7 @@ def test_box_pass_ac(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -394,7 +394,7 @@ def test_box_pass_abc(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -414,7 +414,7 @@ def test_box_pass_d_as_b(args, kwargs, rv, boxclass):
     def fn(a, b, c):
         return a + b + c
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -432,7 +432,7 @@ def test_box_pass_method(args, kwargs, rv, boxclass):
         def __init__(self, x):
             self.x = x
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert Foo(*args, **kwargs).x == rv
 
 
@@ -452,7 +452,7 @@ def test_box_pass_key_type(args, kwargs, rv, boxclass):
     def fn(x):
         return x + 41
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         assert fn(*args, **kwargs) == rv
 
 
@@ -464,7 +464,7 @@ def test_box_pass_unexpected_argument(boxclass):
     def fn(a, b):
         return a + b
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         with pytest.raises(TypeError) as excinfo:
             fn(1, 2)
 
@@ -478,7 +478,7 @@ def test_box_pass_keyerror(boxclass):
     def fn(a, b):
         return a + b
 
-    with picobox.push(testbox):
+    with picobox.pushpop(testbox):
         with pytest.raises(KeyError) as excinfo:
             fn(1)
 
@@ -489,7 +489,7 @@ def test_chainbox_put_changes_box():
     testbox = picobox.Box()
     testchainbox = picobox.ChainBox(testbox)
 
-    with picobox.push(testchainbox):
+    with picobox.pushpop(testchainbox):
         with pytest.raises(KeyError):
             picobox.get('the-key')
         picobox.put('the-key', 42)
@@ -507,6 +507,17 @@ def test_chainbox_get_chained():
 
     testchainbox = picobox.ChainBox(testbox_a, testbox_b)
 
-    with picobox.push(testchainbox):
+    with picobox.pushpop(testchainbox):
         assert testchainbox.get('the-key') == 42
         assert testchainbox.get('the-pin') == 12
+
+
+def test_deprecated_push(boxclass):
+    message = (
+        'push\(\) has been renamed into pushpop\(\); please use new name '
+        'because old one will be removed in picobox 2.0.')
+
+    with pytest.warns(DeprecationWarning, match=message):
+        context_manager = picobox.push(boxclass())
+
+    assert isinstance(context_manager, picobox.pushpop)

@@ -14,7 +14,7 @@ def rice(secret):
     print(secret)
 
 
-with picobox.push(picobox.Box()) as box:
+with picobox.pushpop(picobox.Box()) as box:
     box.put('secret', 42)
 
     # We don't need to propagate a secret down to rice which is good because

@@ -27,6 +27,6 @@ box = picobox.Box()
 box.put(Sender, factory=Sender, scope=picobox.singleton)
 box.put('document', 'cv.txt')
 
-with picobox.push(box):
+with picobox.pushpop(box):
     controller = Controller()
     controller.process()

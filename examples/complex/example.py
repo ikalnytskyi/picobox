@@ -17,5 +17,5 @@ box = picobox.Box()
 box.put('conf', {'connection': 'sqlite://'})
 box.put('session', factory=session)
 
-with picobox.push(box):
+with picobox.pushpop(box):
     compute()

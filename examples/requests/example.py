@@ -19,7 +19,7 @@ def spam(session):
 box = picobox.Box()
 box.put('session', factory=requests.Session, scope=picobox.threadlocal)
 
-with picobox.push(box):
+with picobox.pushpop(box):
     # We have 3 threads and 10 spam calls which means there should be no more
     # than 3 different session instances (check session ID in the output).
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
