@@ -275,6 +275,12 @@ Stacked API
 Release Notes
 -------------
 
+.. note::
+
+    Picobox follows `Semantic Versioning <https://semver.org>`_ which means
+    backward incompatible changes will be released along with bumping major
+    version component.
+
 1.1.0
 `````
 
