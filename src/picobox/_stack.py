@@ -2,6 +2,7 @@
 
 import threading
 import functools
+import warnings
 
 from ._box import Box, ChainBox
 
@@ -23,13 +24,13 @@ class _topbox:
 
         except IndexError:
             raise RuntimeError(
-                'No boxes found on stack, please use picobox.push() first.')
+                'No boxes found on stack, please use picobox.pushpop() first.')
 
 
 _topbox = _topbox()
 
 
-class push:
+class pushpop:
     """Context manager to push a :class:`Box` instance to the top of the stack.
 
     The box on the top is used by :func:`put`, :func:`get` and :func:`pass_`
@@ -37,7 +38,7 @@ class push:
     stacked interface. The idea behind stacked interface is to provide a way
     to easily switch DI containers (boxes) without changing injections.
 
-    Here's a minimal example of how push can be used::
+    Here's a minimal example of how it can be used::
 
         import picobox
 
@@ -51,8 +52,8 @@ class push:
         barbox = picobox.Box()
         barbox.put('magic', 13)
 
-        with picobox.push(foobox):
-            with picobox.push(barbox):
+        with picobox.pushpop(foobox):
+            with picobox.pushpop(barbox):
                 assert do() == 14
             assert do() == 43
 
@@ -84,6 +85,15 @@ class push:
         # alternative implementations.
         with self._lock:
             _stack.pop()
+
+
+def push(box, chain=False):
+    """Deprecated alias of :class:`pushpop`."""
+    warnings.warn(
+        'push() has been renamed into pushpop(); please use new name because '
+        'old one will be removed in picobox 2.0.',
+        DeprecationWarning)
+    return pushpop(box, chain)
 
 
 def _wraps(method):

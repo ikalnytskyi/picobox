@@ -185,10 +185,10 @@ general methods that will be applied to latest active box instance.
     box_b = picobox.Box()
     box_b.put('foo', 42)
 
-    with picobox.push(box_a):
+    with picobox.pushpop(box_a):
         print(spam())               # 13
 
-        with picobox.push(box_b):
+        with picobox.pushpop(box_b):
             print(spam())           # 42
 
         print(spam())               # 13
@@ -214,8 +214,8 @@ missed lookups will be proxied to the box one level down the stack.
     box_b = picobox.Box()
     box_b.put('bar', 0)
 
-    with picobox.push(box_a):
-        with picobox.push(box_b, chain=True):
+    with picobox.pushpop(box_a):
+        with picobox.pushpop(box_b, chain=True):
             print(spam())           # 13
 
 The stack interface is recommended way to use Picobox because it allows to
@@ -226,7 +226,7 @@ not a solution.
 .. code:: python
 
     def test_spam():
-        with picobox.push(picobox.Box(), chain=True) as box:
+        with picobox.pushpop(picobox.Box(), chain=True) as box:
             box.put('foo', 42)
             assert spam() == 42
 
@@ -267,6 +267,7 @@ Stacked API
 ```````````
 
 .. autofunction:: push
+.. autofunction:: pushpop
 .. autofunction:: put
 .. autofunction:: get
 .. autofunction:: pass_
@@ -280,6 +281,9 @@ Release Notes
     Picobox follows `Semantic Versioning <https://semver.org>`_ which means
     backward incompatible changes will be released along with bumping major
     version component.
+
+* ``push()`` context manager has been renamed into ``pushpop()``. This is a
+  breaking change though ``push()`` will work as before till Picobox 2.0.
 
 1.1.0
 `````

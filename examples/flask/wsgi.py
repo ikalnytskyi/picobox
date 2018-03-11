@@ -18,5 +18,5 @@ box.put('magic', 12)
 # request (see Flask request context), but this way it would be harder
 # to test the app since any attempt to override dependencies in tests
 # will fail due to later attempt to push a new box by request hooks.
-picobox.push(box).__enter__()
+picobox.pushpop(box).__enter__()
 from example import app  # noqa
