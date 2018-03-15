@@ -7,6 +7,7 @@ from ._box import Box, ChainBox
 
 
 _stack = []
+_lock = threading.Lock()
 
 
 # An internal class that proxies all calls to its instance to a box at the top
@@ -29,15 +30,33 @@ class _topbox:
 _topbox = _topbox()
 
 
-class push:
-    """Context manager to push a :class:`Box` instance to the top of the stack.
+class _push:
+    """A helper context manager, that will automatically call :func:`pop`."""
+
+    def __init__(self, box):
+        self._box = box
+
+    def __enter__(self):
+        return self._box
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        pop()
+
+
+def push(box, chain=False):
+    """Push a :class:`Box` instance to the top of the stack.
+
+    Returns a context manager, that will automatically pop the box from the
+    top of the stack on exit. Can also be used as a regular function, in
+    which case it's up to callers to perform a corresponding call to
+    :func:`pop()`, when they are done with the box.
 
     The box on the top is used by :func:`put`, :func:`get` and :func:`pass_`
     functions (not methods) and together they define a so called Picobox's
     stacked interface. The idea behind stacked interface is to provide a way
     to easily switch DI containers (boxes) without changing injections.
 
-    Here's a minimal example of how push can be used::
+    Here's a minimal example of how push can be used (as a context manager)::
 
         import picobox
 
@@ -56,34 +75,62 @@ class push:
                 assert do() == 14
             assert do() == 43
 
+    As a regular function::
+
+        import picobox
+
+        @picobox.pass_('magic')
+        def do(magic):
+            return magic + 1
+
+        foobox = picobox.Box()
+        foobox.put('magic', 42)
+
+        barbox = picobox.Box()
+        barbox.put('magic', 13)
+
+        picobox.push(foobox)
+        assert do() == 43
+        picobox.push(barbox)
+        assert do() == 14
+        picobox.pop()
+        picobox.pop()
+
     :param box: A :class:`Box` instance to push to the top of the stack.
     :param chain: (optional) Look up missed keys one level down the stack. To
         look up through multiple levels, each level must be created with this
         option set to ``True``.
     """
 
-    def __init__(self, box, chain=False):
-        self._lock = threading.Lock()
-        self._box = box
-        self._chain = chain
+    # Despite "list" is thread-safe in CPython (due to GIL), it's not
+    # guaranteed by the language itself and may not be the case among
+    # alternative implementations.
+    with _lock:
+        if chain and _stack:
+            box = ChainBox(box, _stack[-1])
+        _stack.append(box)
 
-    def __enter__(self):
-        # Despite "list" is thread-safe in CPython (due to GIL), it's not
-        # guaranteed by the language itself and may not be the case among
-        # alternative implementations.
-        with self._lock:
-            box = self._box
-            if self._chain and _stack:
-                box = ChainBox(box, _stack[-1])
-            _stack.append(box)
-        return box
+    return _push(box)
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        # Despite "list" is thread-safe in CPython (due to GIL), it's not
-        # guaranteed by the language itself and may not be the case among
-        # alternative implementations.
-        with self._lock:
-            _stack.pop()
+
+def pop():
+    """Pop the box from the top of the stack.
+
+    Should be called once for every corresponding call to :func:`push` in order
+    to remove the box from the top of the stack, when a caller is done with it.
+
+    Note, that :func:`push` should normally be used as a context manager,
+    in which case the top box is removed automatically on exit from the
+    with-block and there is no need to call :func:`pop` explicitly.
+
+    :raises: IndexError: if the stack is empty and there's nothing to pop
+    """
+
+    # Despite "list" is thread-safe in CPython (due to GIL), it's not
+    # guaranteed by the language itself and may not be the case among
+    # alternative implementations.
+    with _lock:
+        _stack.pop()
 
 
 def _wraps(method):

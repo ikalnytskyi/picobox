@@ -230,6 +230,21 @@ not a solution.
             box.put('foo', 42)
             assert spam() == 42
 
+``picobox.push()`` can also be used as a regular function, not only as a
+context manager.
+
+.. code:: python
+
+     def test_spam():
+        box = picobox.push(picobox.Box(), chain=True)
+        box.put('foo', 42)
+        assert spam() == 42
+        picobox.pop()
+
+Every call to ``picobox.push()`` should eventually be followed by a corresponding
+call to ``picobox.pop()`` to remove the box from the top of the stack, when you
+are done with it.
+
 
 API reference
 -------------
@@ -267,6 +282,7 @@ Stacked API
 ```````````
 
 .. autofunction:: push
+.. autofunction:: pop
 .. autofunction:: put
 .. autofunction:: get
 .. autofunction:: pass_
@@ -280,6 +296,16 @@ Release Notes
     Picobox follows `Semantic Versioning <https://semver.org>`_ which means
     backward incompatible changes will be released along with bumping major
     version component.
+
+Unreleased
+``````````
+
+* ``picobox.push()`` can now be used as a regular function as well, not only
+  as a context manager.
+
+* New ``picobox.pop()`` function, that pops the box from the top of the stack.
+
+* Fixed a potential race condition on concurrent calls to ``picobox.push()``.
 
 1.1.0
 `````

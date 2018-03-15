@@ -510,3 +510,27 @@ def test_chainbox_get_chained():
     with picobox.push(testchainbox):
         assert testchainbox.get('the-key') == 42
         assert testchainbox.get('the-pin') == 12
+
+
+def test_push_pop_as_regular_functions():
+    @picobox.pass_('magic')
+    def do(magic):
+        return magic + 1
+
+    foobox = picobox.Box()
+    foobox.put('magic', 42)
+
+    barbox = picobox.Box()
+    barbox.put('magic', 13)
+
+    picobox.push(foobox)
+    assert do() == 43
+    picobox.push(barbox)
+    assert do() == 14
+    picobox.pop()
+    picobox.pop()
+
+
+def test_pop_empty_stack():
+    with pytest.raises(IndexError):
+        picobox.pop()

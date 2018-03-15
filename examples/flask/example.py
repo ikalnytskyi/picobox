@@ -1,5 +1,5 @@
 import picobox
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from tools import spam
 
 
@@ -17,4 +17,28 @@ def index():
 @app.route('/magic')
 @picobox.pass_('magic')
 def magic(magic):
+    return jsonify({'magic': magic})
+
+
+@app.before_request
+def serve_eggs_with_spam():
+    box = picobox.Box()
+
+    # on requests to /eggs, override the value of magic with 'spam'
+    if request.path == '/eggs':
+        box.put('magic', 'spam')
+
+    picobox.push(box, chain=True)
+
+
+@app.after_request
+def take_spam_away(response):
+    # pop the box from the top of the stack to remove the override
+    picobox.pop()
+    return response
+
+
+@app.route('/eggs')
+@picobox.pass_('magic')
+def eggs(magic):
     return jsonify({'magic': magic})
