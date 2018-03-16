@@ -2,7 +2,7 @@
 
 from ._box import Box, ChainBox
 from ._scopes import Scope, singleton, threadlocal, noscope
-from ._stack import push, put, get, pass_
+from ._stack import push, pop, put, get, pass_
 
 
 __all__ = [
@@ -15,6 +15,7 @@ __all__ = [
     'noscope',
 
     'push',
+    'pop',
     'put',
     'get',
     'pass_',
