@@ -77,23 +77,13 @@ def push(box, chain=False):
 
     As a regular function::
 
-        import picobox
-
-        @picobox.pass_('magic')
-        def do(magic):
-            return magic + 1
-
-        foobox = picobox.Box()
-        foobox.put('magic', 42)
-
-        barbox = picobox.Box()
-        barbox.put('magic', 13)
-
         picobox.push(foobox)
-        assert do() == 43
         picobox.push(barbox)
+
         assert do() == 14
         picobox.pop()
+
+        assert do() == 43
         picobox.pop()
 
     :param box: A :class:`Box` instance to push to the top of the stack.

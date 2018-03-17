@@ -160,7 +160,7 @@ class Box(object):
 
         :param key: A key to retrieve a dependency. Must be the one used when
             calling :meth:`.put` method.
-        :parameter as\_: (optional) Bind a dependency associated with `key` to
+        :param as\_: (optional) Bind a dependency associated with `key` to
             a function argument named `as_`. If not passed, the same as `key`.
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
