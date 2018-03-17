@@ -125,12 +125,11 @@ def pop():
 
     :raises: IndexError: if the stack is empty and there's nothing to pop
     """
-
     # Despite "list" is thread-safe in CPython (due to GIL), it's not
     # guaranteed by the language itself and may not be the case among
     # alternative implementations.
     with _lock:
-        _stack.pop()
+        return _stack.pop()
 
 
 def _wraps(method):
