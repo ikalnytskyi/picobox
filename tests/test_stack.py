@@ -525,10 +525,12 @@ def test_push_pop_as_regular_functions():
 
     picobox.push(foobox)
     assert do() == 43
+
     picobox.push(barbox)
     assert do() == 14
-    picobox.pop()
-    picobox.pop()
+
+    assert picobox.pop() is barbox
+    assert picobox.pop() is foobox
 
 
 def test_pop_empty_stack():
