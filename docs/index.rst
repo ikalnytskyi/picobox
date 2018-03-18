@@ -297,15 +297,20 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
-Unreleased
-``````````
+2.0.0
+`````
+
+Released on Mar 18, 2018.
 
 * ``picobox.push()`` can now be used as a regular function as well, not only
-  as a context manager.
+  as a context manager. This is a breaking change because from now one a box
+  is pushed on stack immediately when calling ``picobox.push()``, no need to
+  wait for ``__enter__()`` to be called.
 
 * New ``picobox.pop()`` function, that pops the box from the top of the stack.
 
-* Fixed a potential race condition on concurrent calls to ``picobox.push()``.
+* Fixed a potential race condition on concurrent calls to ``picobox.push()``
+  that may occur in non-CPython implementations.
 
 1.1.0
 `````
