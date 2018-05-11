@@ -4,8 +4,8 @@ Picobox
 .. image:: https://img.shields.io/pypi/v/picobox.svg
    :target: https://pypi.python.org/pypi/picobox
 
-.. image:: https://travis-ci.org/ikalnytskyi/picobox.svg
-   :target: https://travis-ci.org/ikalnytskyi/picobox
+.. image:: https://travis-ci.com/ikalnytskyi/picobox.svg?branch=master
+   :target: https://travis-ci.com/ikalnytskyi/picobox.svg?branch=master
 
 .. image:: https://codecov.io/gh/ikalnytskyi/picobox/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/ikalnytskyi/picobox
