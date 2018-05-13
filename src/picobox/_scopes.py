@@ -45,14 +45,18 @@ class threadlocal(Scope):
     """Share instances across the same thread."""
 
     def __init__(self):
-        self._store = threading.local()
+        self._local = threading.local()
 
     def set(self, key, value):
-        setattr(self._store, key, value)
+        try:
+            store = self._local.store
+        except AttributeError:
+            store = self._local.store = {}
+        store[key] = value
 
     def get(self, key):
         try:
-            rv = getattr(self._store, key)
+            rv = self._local.store[key]
         except AttributeError:
             raise KeyError("'%s'" % key)
         return rv
