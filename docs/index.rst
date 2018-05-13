@@ -297,6 +297,11 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
+Not released changes.
+
+* Fix ``picobox.threadlocal`` issue when it was impossible to use any hashable
+  key other than ``str``.
+
 2.0.0
 `````
 

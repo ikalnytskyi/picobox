@@ -7,45 +7,18 @@ import pytest
 import picobox
 
 
-@pytest.fixture(params=[picobox.Box, picobox.ChainBox])
-def boxclass(request):
-    yield request.param
-
-
-@pytest.mark.parametrize('key', [
-    42,
-    '42',
-    42.42,
-    True,
-    None,
-    (1, None, True),
-    object(),
-])
-def test_box_put_key(key, boxclass):
+def test_box_put_key(boxclass, supported_key):
     testbox = boxclass()
-    testbox.put(key, 'the-value')
+    testbox.put(supported_key, 'the-value')
 
-    assert testbox.get(key) == 'the-value'
+    assert testbox.get(supported_key) == 'the-value'
 
 
-@pytest.mark.parametrize('value', [
-    42,
-    '42',
-    42.42,
-    True,
-    None,
-    {'a': 1, 'b': 2},
-    {'a', 'b', 'c'},
-    [1, 2, 'c'],
-    (1, None, True),
-    object(),
-    lambda: 42,
-])
-def test_box_put_value(value, boxclass):
+def test_box_put_value(boxclass, supported_value):
     testbox = boxclass()
-    testbox.put('the-key', value)
+    testbox.put('the-key', supported_value)
 
-    assert testbox.get('the-key') is value
+    assert testbox.get('the-key') is supported_value
 
 
 def test_box_put_factory(boxclass):

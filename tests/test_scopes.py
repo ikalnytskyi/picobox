@@ -6,6 +6,29 @@ import pytest
 import picobox
 
 
+@pytest.mark.parametrize('scopeclass', [
+    picobox.singleton,
+    picobox.threadlocal,
+])
+def test_scope_set_key(scopeclass, supported_key):
+    scope = scopeclass()
+    value = object()
+
+    scope.set(supported_key, value)
+    assert scope.get(supported_key) is value
+
+
+@pytest.mark.parametrize('scopeclass', [
+    picobox.singleton,
+    picobox.threadlocal,
+])
+def test_scope_set_value(scopeclass, supported_value):
+    scope = scopeclass()
+
+    scope.set('the-key', supported_value)
+    assert scope.get('the-key') is supported_value
+
+
 def test_singleton():
     scope = picobox.singleton()
     value = object()
