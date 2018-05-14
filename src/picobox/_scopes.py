@@ -3,6 +3,11 @@
 import abc
 import threading
 
+try:
+    import contextvars as _contextvars
+except ImportError:
+    _contextvars = None
+
 
 class Scope(metaclass=abc.ABCMeta):
     """Scope is an execution context based storage interface.
@@ -62,6 +67,26 @@ class threadlocal(Scope):
         return rv
 
 
+class contextvars(Scope):
+    """Share instances across the same execution context (:pep:`567`)."""
+
+    def __init__(self):
+        self._store = {}
+
+    def set(self, key, value):
+        try:
+            var = self._store[key]
+        except KeyError:
+            var = self._store[key] = _contextvars.ContextVar('picobox')
+        var.set(value)
+
+    def get(self, key):
+        try:
+            return self._store[key].get()
+        except LookupError:
+            raise KeyError("'%s'" % key)
+
+
 class noscope(Scope):
     """Do not share instances, create them each time on demand."""
 
@@ -70,3 +95,7 @@ class noscope(Scope):
 
     def get(self, key):
         raise KeyError("'%s'" % key)
+
+
+if not _contextvars:
+    del contextvars

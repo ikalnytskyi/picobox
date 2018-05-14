@@ -4,6 +4,11 @@ from ._box import Box, ChainBox
 from ._scopes import Scope, singleton, threadlocal, noscope
 from ._stack import push, pop, put, get, pass_
 
+try:
+    from ._scopes import contextvars
+except ImportError:
+    pass
+
 
 __all__ = [
     'Box',
@@ -12,6 +17,7 @@ __all__ = [
     'Scope',
     'singleton',
     'threadlocal',
+    'contextvars',
     'noscope',
 
     'push',

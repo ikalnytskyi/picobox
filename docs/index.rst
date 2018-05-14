@@ -275,6 +275,15 @@ Scopes
 .. autodata:: threadlocal
     :annotation:
 
+.. autodata:: contextvars
+    :annotation:
+
+    Since `asyncio does support context variables`__, the scope could be used
+    in asynchronous applications to share dependencies between coroutines of
+    the same :class:`asyncio.Task`.
+
+    .. __: https://docs.python.org/3.7/library/contextvars.html#asyncio-support
+
 .. autodata:: noscope
     :annotation:
 
@@ -299,8 +308,13 @@ Release Notes
 
 Not released changes.
 
+* Add ``picobox.contextvars`` scope (python 3.7 and above) that can be used
+  in asyncio applications to have a separate set of dependencies in all
+  coroutines of the same task.
+
 * Fix ``picobox.threadlocal`` issue when it was impossible to use any hashable
   key other than ``str``.
+
 
 2.0.0
 `````

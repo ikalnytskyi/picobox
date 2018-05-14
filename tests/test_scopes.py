@@ -18,6 +18,12 @@ def threadlocal():
 
 
 @pytest.fixture(scope='function')
+def contextvars():
+    pytest.importorskip('contextvars')
+    return picobox.contextvars()
+
+
+@pytest.fixture(scope='function')
 def noscope():
     return picobox.noscope()
 
@@ -59,9 +65,33 @@ def exec_coroutine(request):
     return executor
 
 
+@pytest.fixture(scope='function')
+def exec_context():
+    """Run a given callback in a separate context (PEP 567)."""
+    def executor(callback, *args, **kwargs):
+        import contextvars
+        context = contextvars.copy_context()
+        return context.run(callback, *args, **kwargs)
+
+    pytest.importorskip('contextvars')
+    return executor
+
+
+def test_scope_contextvars_attribute_error(monkeypatch):
+    try:
+        __import__('contextvars')
+        pytest.skip("could import 'contextvars'")
+    except ImportError:
+        pass
+
+    with pytest.raises(AttributeError, match="has no attribute 'contextvars'"):
+        picobox.contextvars
+
+
 @pytest.mark.parametrize('scopename', [
     'singleton',
     'threadlocal',
+    'contextvars',
 ])
 def test_scope_set_key(request, scopename, supported_key):
     scope = request.getfixturevalue(scopename)
@@ -74,6 +104,7 @@ def test_scope_set_key(request, scopename, supported_key):
 @pytest.mark.parametrize('scopename', [
     'singleton',
     'threadlocal',
+    'contextvars',
 ])
 def test_scope_set_value(request, scopename, supported_value):
     scope = request.getfixturevalue(scopename)
@@ -93,6 +124,7 @@ def test_scope_set_value_noscope():
 @pytest.mark.parametrize('scopename', [
     'singleton',
     'threadlocal',
+    'contextvars',
 ])
 def test_scope_set_value_overwrite(request, scopename):
     scope = request.getfixturevalue(scopename)
@@ -108,6 +140,7 @@ def test_scope_set_value_overwrite(request, scopename):
 @pytest.mark.parametrize('scopename', [
     'singleton',
     'threadlocal',
+    'contextvars',
     'noscope',
 ])
 def test_scope_get_keyerror(request, scopename):
@@ -120,6 +153,7 @@ def test_scope_get_keyerror(request, scopename):
 @pytest.mark.parametrize('scopename', [
     'singleton',
     'threadlocal',
+    'contextvars',
 ])
 def test_scope_state_not_leaked(request, scopename):
     scope_a = request.getfixturevalue(scopename)
@@ -144,7 +178,9 @@ def test_scope_state_not_leaked(request, scopename):
 @pytest.mark.parametrize('scopename, executor', [
     ('singleton',    'exec_thread'),
     ('singleton',    'exec_coroutine'),
+    ('singleton',    'exec_context'),
     ('threadlocal',  'exec_coroutine'),
+    ('threadlocal',  'exec_context'),
 ])
 def test_scope_value_shared(request, scopename, executor):
     scope = request.getfixturevalue(scopename)
@@ -157,8 +193,12 @@ def test_scope_value_shared(request, scopename, executor):
 
 @pytest.mark.parametrize('scopename, executor', [
     ('threadlocal',  'exec_thread'),
+    ('contextvars',  'exec_thread'),
+    ('contextvars',  'exec_coroutine'),
+    ('contextvars',  'exec_context'),
     ('noscope',      'exec_thread'),
     ('noscope',      'exec_coroutine'),
+    ('noscope',      'exec_context'),
 ])
 def test_scope_value_not_shared(request, scopename, executor):
     scope = request.getfixturevalue(scopename)
@@ -174,8 +214,13 @@ def test_scope_value_not_shared(request, scopename, executor):
 @pytest.mark.parametrize('scopename, executor', [
     ('singleton',    'exec_thread'),
     ('singleton',    'exec_coroutine'),
+    ('singleton',    'exec_context'),
     ('threadlocal',  'exec_thread'),
     ('threadlocal',  'exec_coroutine'),
+    ('threadlocal',  'exec_context'),
+    ('contextvars',  'exec_thread'),
+    ('contextvars',  'exec_coroutine'),
+    ('contextvars',  'exec_context'),
 ])
 def test_scope_value_downstack_shared(request, scopename, executor):
     scope = request.getfixturevalue(scopename)
@@ -195,6 +240,7 @@ def test_scope_value_downstack_shared(request, scopename, executor):
 @pytest.mark.parametrize('scopename, executor', [
     ('noscope',      'exec_thread'),
     ('noscope',      'exec_coroutine'),
+    ('noscope',      'exec_context'),
 ])
 def test_scope_value_downstack_not_shared(request, scopename, executor):
     scope = request.getfixturevalue(scopename)
@@ -214,6 +260,9 @@ def test_scope_value_downstack_not_shared(request, scopename, executor):
 
 @pytest.mark.parametrize('scopename, executor', [
     ('threadlocal',  'exec_thread'),
+    ('contextvars',  'exec_thread'),
+    ('contextvars',  'exec_coroutine'),
+    ('contextvars',  'exec_context'),
 ])
 def test_scope_not_leaked(request, scopename, executor):
     scope = request.getfixturevalue(scopename)
