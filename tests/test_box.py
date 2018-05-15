@@ -108,10 +108,8 @@ def test_box_put_value_and_scope(boxclass):
 def test_box_get_keyerror(boxclass):
     testbox = boxclass()
 
-    with pytest.raises(KeyError) as excinfo:
+    with pytest.raises(KeyError, match='the-key'):
         testbox.get('the-key')
-
-    excinfo.match('the-key')
 
 
 def test_box_get_default(boxclass):
@@ -386,7 +384,7 @@ def test_chainbox_put_changes_box():
     testbox = picobox.Box()
     testchainbox = picobox.ChainBox(testbox)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match='the-key'):
         testchainbox.get('the-key')
     testchainbox.put('the-key', 42)
 

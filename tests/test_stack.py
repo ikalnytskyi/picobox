@@ -86,35 +86,20 @@ def test_box_put_runtimeerror(boxclass):
         'No boxes found on stack, please use picobox.push() first.')
 
 
-@pytest.mark.parametrize('value', [
-    42,
-    '42',
-    42.42,
-    True,
-    None,
-    {'a': 1, 'b': 2},
-    {'a', 'b', 'c'},
-    [1, 2, 'c'],
-    (1, None, True),
-    object(),
-    lambda: 42,
-])
-def test_box_get_value(value, boxclass):
+def test_box_get_value(boxclass, supported_value):
     testbox = boxclass()
-    testbox.put('the-key', value)
+    testbox.put('the-key', supported_value)
 
     with picobox.push(testbox):
-        assert picobox.get('the-key') is value
+        assert picobox.get('the-key') is supported_value
 
 
 def test_box_get_keyerror(boxclass):
     testbox = boxclass()
 
     with picobox.push(testbox):
-        with pytest.raises(KeyError) as excinfo:
+        with pytest.raises(KeyError, match='the-key'):
             picobox.get('the-key')
-
-    excinfo.match('the-key')
 
 
 def test_box_get_default(boxclass):
@@ -144,7 +129,7 @@ def test_box_get_from_top(boxclass, kwargs):
         with picobox.push(testbox_b, **kwargs):
             assert picobox.get('the-key') == 'b'
 
-            with pytest.raises(KeyError):
+            with pytest.raises(KeyError, match='the-pin'):
                 picobox.get('the-pin')
 
         assert picobox.get('the-key') == 'a'
@@ -452,10 +437,8 @@ def test_box_pass_keyerror(boxclass):
         return a + b
 
     with picobox.push(testbox):
-        with pytest.raises(KeyError) as excinfo:
+        with pytest.raises(KeyError, match='b'):
             fn(1)
-
-    excinfo.match('b')
 
 
 def test_chainbox_put_changes_box():
@@ -463,7 +446,7 @@ def test_chainbox_put_changes_box():
     testchainbox = picobox.ChainBox(testbox)
 
     with picobox.push(testchainbox):
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match='the-key'):
             picobox.get('the-key')
         picobox.put('the-key', 42)
 
