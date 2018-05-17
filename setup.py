@@ -25,6 +25,11 @@ setuptools.setup(
     setup_requires=[
         'setuptools_scm',
     ],
+    project_urls={
+        'Documentation': 'https://picobox.readthedocs.io',
+        'Source': 'https://github.com/ikalnytskyi/picobox',
+        'Bugs': 'https://github.com/ikalnytskyi/picobox/issues',
+    },
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
