@@ -18,6 +18,7 @@ exclude_patterns = ['_build', '_themes']
 pygments_style = 'sphinx'
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 autodoc_member_order = 'bysource'
+autodoc_mock_imports = ['contextvars']
 
 # -- HTML output
 html_use_index = False
