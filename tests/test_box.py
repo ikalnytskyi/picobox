@@ -380,6 +380,19 @@ def test_box_pass_keyerror(boxclass):
     excinfo.match('b')
 
 
+def test_box_pass_autowire(boxclass):
+    testbox = picobox.Box()
+    testbox.put('a', 1)
+    testbox.put('b', 2)
+
+    @testbox.pass_('noop', autowire=True)
+    def fn(a, b):
+        return a + b
+
+    assert fn() == 3
+    assert fn(b=1) == 2
+
+
 def test_chainbox_put_changes_box():
     testbox = picobox.Box()
     testchainbox = picobox.ChainBox(testbox)

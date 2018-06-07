@@ -149,7 +149,7 @@ class Box(object):
 
         return value
 
-    def pass_(self, key, as_=_missing):
+    def pass_(self, key, as_=_missing, autowire=_missing):
         """Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -175,12 +175,17 @@ class Box(object):
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
+                if autowire is not _missing:
+                    for param in set(self._store) & set(signature.parameters):
+                        if param not in arguments.arguments:
+                            kwargs[param] = self.get(param)
+
                 # Box supplies an argument if and only if the argument wasn't
                 # supplied explicitly by caller code. This is intended behavior
                 # and a rationale behind is to preserve compatibility with
                 # usual function call.
-                if as_ not in arguments.arguments:
-                    kwargs[as_] = self.get(key)
+                # if as_ not in arguments.arguments:
+                #     kwargs[as_] = self.get(key)
 
                 return fn(*args, **kwargs)
             return wrapper
