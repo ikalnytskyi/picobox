@@ -315,6 +315,8 @@ Not released changes.
 * Fix ``picobox.threadlocal`` issue when it was impossible to use any hashable
   key other than ``str``.
 
+* Nested ``picobox.pass_`` calls are now squashed into one in order to
+  improve runtime performance.
 
 2.0.0
 `````
