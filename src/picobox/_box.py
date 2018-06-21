@@ -165,24 +165,29 @@ class Box(object):
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
         def decorator(fn):
+            # If pass_ decorator is called second time (or more), we can squash
+            # the calls into one and reduce runtime costs of injection.
+            if hasattr(fn, '__dependencies__'):
+                fn.__dependencies__.append((key, as_))
+                return fn
+
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):
-                nonlocal as_
-
-                if as_ is _missing:
-                    as_ = key
-
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
-                # Box supplies an argument if and only if the argument wasn't
-                # supplied explicitly by caller code. This is intended behavior
-                # and a rationale behind is to preserve compatibility with
-                # usual function call.
-                if as_ not in arguments.arguments:
-                    kwargs[as_] = self.get(key)
+                for key, as_ in wrapper.__dependencies__:
+                    if as_ is _missing:
+                        as_ = key
 
+                    # One of picobox core principles is to supply dependencies
+                    # if and only if they weren't passed explicitly by the
+                    # caller code. A rationale behind is to be compatible with
+                    # calls written prior picobox integration.
+                    if as_ not in arguments.arguments:
+                        kwargs[as_] = self.get(key)
                 return fn(*args, **kwargs)
+            wrapper.__dependencies__ = [(key, as_)]
             return wrapper
         return decorator
 

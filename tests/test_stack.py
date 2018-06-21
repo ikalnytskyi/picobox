@@ -1,5 +1,8 @@
 """Test picobox's stack interface."""
 
+import itertools
+import traceback
+
 import pytest
 import picobox
 
@@ -439,6 +442,52 @@ def test_box_pass_keyerror(boxclass):
     with picobox.push(testbox):
         with pytest.raises(KeyError, match='b'):
             fn(1)
+
+
+def test_box_pass_optimization(boxclass, request):
+    testbox = boxclass()
+    testbox.put('a', 1)
+    testbox.put('b', 1)
+    testbox.put('d', 1)
+
+    @picobox.pass_('a')
+    @picobox.pass_('b')
+    @picobox.pass_('d', as_='c')
+    def fn(a, b, c):
+        backtrace = list(itertools.dropwhile(
+            lambda frame: frame[2] != request.function.__name__,
+            traceback.extract_stack()))
+        return backtrace[1:-1]
+
+    with picobox.push(testbox):
+        assert len(fn()) == 1
+
+
+def test_box_pass_optimization_complex(boxclass, request):
+    testbox = boxclass()
+    testbox.put('a', 1)
+    testbox.put('b', 1)
+    testbox.put('c', 1)
+    testbox.put('d', 1)
+
+    def passthrough(fn):
+        def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
+
+    @picobox.pass_('a')
+    @picobox.pass_('b')
+    @passthrough
+    @picobox.pass_('c')
+    @picobox.pass_('d')
+    def fn(a, b, c, d):
+        backtrace = list(itertools.dropwhile(
+            lambda frame: frame[2] != request.function.__name__,
+            traceback.extract_stack()))
+        return backtrace[1:-1]
+
+    with picobox.push(testbox):
+        assert len(fn()) == 3
 
 
 def test_chainbox_put_changes_box():
