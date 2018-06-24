@@ -1,10 +1,9 @@
 """Box container."""
 
 import functools
-import inspect
 import threading
 
-from . import _scopes
+from . import _scopes, _compat
 
 
 # Missing is a special sentinel object that's used to indicate a value is
@@ -173,7 +172,7 @@ class Box(object):
 
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):
-                signature = inspect.signature(fn)
+                signature = _compat.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
                 for key, as_ in wrapper.__dependencies__:

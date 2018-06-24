@@ -318,6 +318,8 @@ Not released changes.
 * Nested ``picobox.pass_`` calls are now squashed into one in order to
   improve runtime performance.
 
+* Add ``Python 2.7`` support.
+
 2.0.0
 `````
 

@@ -16,7 +16,7 @@ _lock = threading.Lock()
 # interface but deal with a box at the top. While it's not completely necessary
 # for methods like put() and get(), it's crucial for pass_() due to its
 # lazyness.
-class _topbox:
+class _topbox(object):
 
     def __getattribute__(self, name):
         try:
@@ -145,4 +145,9 @@ def get(*args, **kwargs):
 @_wraps(Box.pass_)
 def pass_(*args, **kwargs):
     """The same as :meth:`Box.pass_` but for a box at the top of the stack."""
-    return Box.pass_(_topbox, *args, **kwargs)
+    # Box.pass_(_topbox, *args, **kwargs) does not work in Python 2 because
+    # Box.pass_ is an unbound method, and unbound methods require class
+    # instance as its first argument. Therefore, we need a workaround to
+    # extract a function without "method" wrapping, so we can pass anything
+    # as the first argument.
+    return vars(Box)['pass_'](_topbox, *args, **kwargs)

@@ -1,6 +1,5 @@
 """Test picobox's scopes implementations."""
 
-import asyncio
 import threading
 
 import pytest
@@ -32,29 +31,28 @@ def noscope():
 def exec_thread():
     """Run a given callback in a separate OS thread."""
     def executor(callback, *args, **kwargs):
-        ret = None
-        exc = None
+        closure = {}
 
         def target():
-            nonlocal ret, exc
             try:
-                ret = callback(*args, **kwargs)
+                closure['ret'] = callback(*args, **kwargs)
             except Exception as e:
-                exc = e
+                closure['exc'] = e
 
         worker = threading.Thread(target=target)
         worker.start()
         worker.join()
 
-        if exc:
-            raise exc
-        return ret
+        if 'exc' in closure:
+            raise closure['exc']
+        return closure['ret']
     return executor
 
 
 @pytest.fixture(scope='function')
 def exec_coroutine(request):
     """Run a given coroutine function in a separate event loop."""
+    asyncio = pytest.importorskip('asyncio')
     loop = asyncio.new_event_loop()
     request.addfinalizer(loop.close)
 
