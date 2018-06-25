@@ -29,11 +29,11 @@ Features
 --------
 
 * Support both values and factories.
-* Support scopes (e.g. singleton, threadlocal).
+* Support scopes (e.g. singleton, threadlocal, contextvars).
 * Push boxes on stack, and use the top one to access values.
 * Thread-safe.
-* Lightweight ( ~141 LOC ).
-* Zero dependencies.
+* Lightweight (~213 LOC including scopes).
+* Zero dependencies (on python3).
 * Pure Python.
 
 
