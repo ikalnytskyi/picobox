@@ -65,7 +65,7 @@ jobs:
     - stage: pypi
       deploy:
         provider: pypi
-        distributions: sdist bdist_wheel
+        distributions: sdist bdist_wheel --universal
         on:
           tags: true
         user: $PYPI_USERNAME
