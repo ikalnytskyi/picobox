@@ -306,7 +306,8 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
-Not released changes.
+2.1.0
+`````
 
 * Add ``picobox.contextvars`` scope (python 3.7 and above) that can be used
   in asyncio applications to have a separate set of dependencies in all
