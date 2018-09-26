@@ -91,32 +91,19 @@ def test_scope_contextvars_attribute_error(monkeypatch):
     'threadlocal',
     'contextvars',
 ])
-def test_scope_set_key(request, scopename, supported_key):
-    scope = request.getfixturevalue(scopename)
-    value = object()
-
-    scope.set(supported_key, value)
-    assert scope.get(supported_key) is value
-
-
-@pytest.mark.parametrize('scopename', [
-    'singleton',
-    'threadlocal',
-    'contextvars',
-])
-def test_scope_set_value(request, scopename, supported_value):
+def test_scope_set(request, scopename, supported_key, supported_value):
     scope = request.getfixturevalue(scopename)
 
-    scope.set('the-key', supported_value)
-    assert scope.get('the-key') is supported_value
+    scope.set(supported_key, supported_value)
+    assert scope.get(supported_key) is supported_value
 
 
-def test_scope_set_value_noscope():
+def test_scope_set_noscope(supported_key, supported_value):
     scope = picobox.noscope()
-    scope.set('the-key', 'the-value')
+    scope.set(supported_key, supported_value)
 
-    with pytest.raises(KeyError, match='the-key'):
-        scope.get('the-key')
+    with pytest.raises(KeyError, match=str(supported_key)):
+        scope.get(supported_key)
 
 
 @pytest.mark.parametrize('scopename', [
@@ -124,7 +111,7 @@ def test_scope_set_value_noscope():
     'threadlocal',
     'contextvars',
 ])
-def test_scope_set_value_overwrite(request, scopename):
+def test_scope_set_overwrite(request, scopename):
     scope = request.getfixturevalue(scopename)
     value = object()
 
@@ -141,11 +128,11 @@ def test_scope_set_value_overwrite(request, scopename):
     'contextvars',
     'noscope',
 ])
-def test_scope_get_keyerror(request, scopename):
+def test_scope_get_keyerror(request, scopename, supported_key):
     scope = request.getfixturevalue(scopename)
 
-    with pytest.raises(KeyError, match='the-key'):
-        scope.get('the-key')
+    with pytest.raises(KeyError, match=repr(supported_key)):
+        scope.get(supported_key)
 
 
 @pytest.mark.parametrize('scopename', [
