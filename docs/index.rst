@@ -287,6 +287,12 @@ Scopes
 .. autodata:: noscope
     :annotation:
 
+.. autodata:: picobox.contrib.flaskscopes.application
+    :annotation:
+
+.. autodata:: picobox.contrib.flaskscopes.request
+    :annotation:
+
 Stacked API
 ```````````
 
@@ -311,6 +317,9 @@ Not released changes.
 * Fix ``picobox.singleton``, ``picobox.threadlocal`` & ``picobox.contextvars``
   scopes so they do not fail with unexpected exception when non-string
   formattable missing key is passed.
+
+* Add ``picobox.contrib.flaskscopes`` module with *application* and *request*
+  scopes for Flask web framework.
 
 2.1.0
 `````
