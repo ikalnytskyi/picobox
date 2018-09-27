@@ -66,7 +66,7 @@ class threadlocal(Scope):
         try:
             rv = self._local.store[key]
         except AttributeError:
-            raise KeyError("'%s'" % key)
+            raise KeyError(key)
         return rv
 
 
@@ -87,7 +87,7 @@ class contextvars(Scope):
         try:
             return self._store[key].get()
         except LookupError:
-            raise KeyError("'%s'" % key)
+            raise KeyError(key)
 
 
 class noscope(Scope):
@@ -97,7 +97,7 @@ class noscope(Scope):
         pass
 
     def get(self, key):
-        raise KeyError("'%s'" % key)
+        raise KeyError(key)
 
 
 if not _contextvars:
