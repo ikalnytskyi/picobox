@@ -149,7 +149,7 @@ class Box(object):
         return value
 
     def pass_(self, key, as_=_missing):
-        """Pass a dependency to a function if nothing explicitly passed.
+        r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
         to have a dependency instance in the box before applying. The instance
