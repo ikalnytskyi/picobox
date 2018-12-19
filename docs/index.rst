@@ -235,7 +235,7 @@ context manager.
 
 .. code:: python
 
-     def test_spam():
+    def test_spam():
         box = picobox.push(picobox.Box(), chain=True)
         box.put('foo', 42)
         assert spam() == 42
@@ -244,6 +244,30 @@ context manager.
 Every call to ``picobox.push()`` should eventually be followed by a corresponding
 call to ``picobox.pop()`` to remove the box from the top of the stack, when you
 are done with it.
+
+.. note::
+
+    Dependency Injection is usually used in applications, not libraries, to
+    wire things together. Occasionally such need may come in libraries too, so
+    picobox provides a :class:`picobox.Stack` class to create an independent
+    non overlapping stack with boxes suitable to be used in such cases.
+
+    Just create a global instance of stack (globals themeselves aren't bad),
+    and use it as you'd use picobox stacked interface:
+
+    .. code:: python
+
+        import picobox
+
+        stack = picobox.Stack()
+
+        @stack.pass_('a', as_='b')
+        def mysum(a, b):
+            return a + b
+
+        with stack.push(picobox.Box()) as box:
+            box.put('a', 42)
+            assert mysum(13) == 55
 
 
 API reference
@@ -296,6 +320,9 @@ Scopes
 Stacked API
 ```````````
 
+.. autoclass:: Stack
+    :members:
+
 .. autofunction:: push
 .. autofunction:: pop
 .. autofunction:: put
@@ -320,6 +347,10 @@ Not released changes.
 
 * Add ``picobox.contrib.flaskscopes`` module with *application* and *request*
   scopes for Flask web framework.
+
+* Add ``picobox.Stack`` class to create stacks with boxes on demand. Might
+  be useful for third-party developers who want to use picobox yet avoid
+  collisions with main application developers.
 
 2.1.0
 `````

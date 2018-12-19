@@ -2,152 +2,206 @@
 
 import threading
 import functools
+import contextlib
 
 from ._box import Box, ChainBox
 
 
-_stack = []
-_lock = threading.Lock()
+def _wraps(method, instance=None):
+    if instance:
+        method = functools.partial(method, instance)
 
-
-# An internal class that proxies all calls to its instance to a box at the top
-# of the stack. The main purpose of this proxy is to be a drop-in replacement
-# for a box instance to provide picobox-level set of functions that mimic Box
-# interface but deal with a box at the top. While it's not completely necessary
-# for methods like put() and get(), it's crucial for pass_() due to its
-# lazyness.
-class _topbox(object):
-
-    def __getattribute__(self, name):
-        try:
-            return getattr(_stack[-1], name)
-
-        except IndexError:
-            raise RuntimeError(
-                'No boxes found on stack, please use picobox.push() first.')
-
-
-_topbox = _topbox()
-
-
-class _push:
-    """A helper context manager, that will automatically call :func:`pop`."""
-
-    def __init__(self, box):
-        self._box = box
-
-    def __enter__(self):
-        return self._box
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        pop()
-
-
-def push(box, chain=False):
-    """Push a :class:`Box` instance to the top of the stack.
-
-    Returns a context manager, that will automatically pop the box from the
-    top of the stack on exit. Can also be used as a regular function, in
-    which case it's up to callers to perform a corresponding call to
-    :func:`pop()`, when they are done with the box.
-
-    The box on the top is used by :func:`put`, :func:`get` and :func:`pass_`
-    functions (not methods) and together they define a so called Picobox's
-    stacked interface. The idea behind stacked interface is to provide a way
-    to easily switch DI containers (boxes) without changing injections.
-
-    Here's a minimal example of how push can be used (as a context manager)::
-
-        import picobox
-
-        @picobox.pass_('magic')
-        def do(magic):
-            return magic + 1
-
-        foobox = picobox.Box()
-        foobox.put('magic', 42)
-
-        barbox = picobox.Box()
-        barbox.put('magic', 13)
-
-        with picobox.push(foobox):
-            with picobox.push(barbox):
-                assert do() == 14
-            assert do() == 43
-
-    As a regular function::
-
-        picobox.push(foobox)
-        picobox.push(barbox)
-
-        assert do() == 14
-        picobox.pop()
-
-        assert do() == 43
-        picobox.pop()
-
-    :param box: A :class:`Box` instance to push to the top of the stack.
-    :param chain: (optional) Look up missed keys one level down the stack. To
-        look up through multiple levels, each level must be created with this
-        option set to ``True``.
-    """
-
-    # Despite "list" is thread-safe in CPython (due to GIL), it's not
-    # guaranteed by the language itself and may not be the case among
-    # alternative implementations.
-    with _lock:
-        if chain and _stack:
-            box = ChainBox(box, _stack[-1])
-        _stack.append(box)
-
-    return _push(box)
-
-
-def pop():
-    """Pop the box from the top of the stack.
-
-    Should be called once for every corresponding call to :func:`push` in order
-    to remove the box from the top of the stack, when a caller is done with it.
-
-    Note, that :func:`push` should normally be used as a context manager,
-    in which case the top box is removed automatically on exit from the
-    with-block and there is no need to call :func:`pop` explicitly.
-
-    :raises: IndexError: if the stack is empty and there's nothing to pop
-    """
-    # Despite "list" is thread-safe in CPython (due to GIL), it's not
-    # guaranteed by the language itself and may not be the case among
-    # alternative implementations.
-    with _lock:
-        return _stack.pop()
-
-
-def _wraps(method):
     # The reason behind empty arguments is to reuse a signature of wrapped
     # function while preserving "__doc__", "__name__" and other accompanied
     # attributes. They are very helpful for troubleshooting as well as
     # necessary for Sphinx API reference.
-    return functools.wraps(functools.partial(method, _topbox), (), ())
+    return functools.wraps(method, (), ())
 
 
-@_wraps(Box.put)
+def _create_stack_proxy(stack, empty_stack_error):
+    """Create an object that proxies all calls to the top of the stack."""
+    class _StackProxy(object):
+        def __getattribute__(self, name):
+            try:
+                return getattr(stack[-1], name)
+            except IndexError:
+                raise RuntimeError(empty_stack_error)
+    return _StackProxy()
+
+
+@contextlib.contextmanager
+def _create_push_context_manager(box, pop_callback):
+    """Create a context manager that calls something on exit."""
+    try:
+        yield box
+    finally:
+        # Ensure the poped box is the same that was submitted by this exact
+        # context manager. It may happen if someone messed up with order of
+        # push() and pop() calls. Normally, push() should be used a context
+        # manager to avoid this issue.
+        assert pop_callback() is box
+
+
+class Stack(object):
+    """
+    .. versionadded:: 2.2
+    """
+
+    def __init__(self, name=None):
+        self._name = name
+        self._stack = []
+        self._lock = threading.Lock()
+
+        # A proxy object that proxies all calls to a box instance on the top
+        # of the stack. We need such an object to provide a set of functions
+        # that mimic Box interface but deal with a box on the top instead.
+        # While it's not completely necessary for `put()` and `get()`, it's
+        # crucial for `pass_()` due to its laziness and thus late evaluation.
+        self._topbox = _create_stack_proxy(self._stack, (
+            'No boxes found on the stack, please `.push()` a box first.'))
+
+    def __repr__(self):
+        name = self._name
+        if not self._name:
+            name = '0x%x' % id(self)
+        return '<Stack (%s)>' % name
+
+    def push(self, box, chain=False):
+        """Push a :class:`Box` instance to the top of the stack.
+
+        Returns a context manager, that will automatically pop the box from the
+        top of the stack on exit. Can also be used as a regular function, in
+        which case it's up to callers to perform a corresponding call to
+        :meth:`.pop`, when they are done with the box.
+
+        The box on the top is used by :meth:`.put`, :meth:`.get` and
+        :meth:`.pass_` methods. Together they define a so called Picobox's
+        stacked interface. The idea behind the stacked interface is to provide
+        a way to easily switch DI containers (boxes) without changing
+        injections.
+
+        Here's a minimal example of how :meth:`.push` can be used as a context
+        manager::
+
+            import picobox
+
+            stack = picobox.Stack()
+
+            @stack.pass_('magic')
+            def do(magic):
+                return magic + 1
+
+            foobox = picobox.Box()
+            foobox.put('magic', 42)
+
+            barbox = picobox.Box()
+            barbox.put('magic', 13)
+
+            with stack.push(foobox):
+                with stack.push(barbox):
+                    assert do() == 14
+                assert do() == 43
+
+        As a regular function::
+
+            stack = picobox.Stack()
+
+            stack.push(foobox)
+            stack.push(barbox)
+
+            assert do() == 14
+            stack.pop()
+
+            assert do() == 43
+            stack.pop()
+
+        :param box: A :class:`Box` instance to push to the top of the stack.
+        :param chain: (optional) Look up missed keys one level down the stack.
+            To look up through multiple levels, each level must be created with
+            this option set to ``True``.
+        """
+        # list.append() is a thread-safe operation in CPython, yet the safety
+        # is not guranteed by the language itself. So the lock is used here to
+        # ensure the code works properly even when running on alternative
+        # implementations.
+        with self._lock:
+            if chain and self._stack:
+                box = ChainBox(box, self._stack[-1])
+            self._stack.append(box)
+        return _create_push_context_manager(self._stack[-1], self._stack.pop)
+
+    def pop(self):
+        """Pop the box from the top of the stack.
+
+        Should be called once for every corresponding call to :meth:`.push` in
+        order to remove the box from the top of the stack, when a caller is
+        done with it.
+
+        .. note::
+
+            Normally :meth:`.push` should be used a context manager, in which
+            case the box on the top is removed automatically on exit from
+            the block (i.e. no need to call :meth:`.pop` manually).
+
+        :return: a removed box
+        :raises IndexError: If the stack is empty and there's nothing to pop.
+        """
+        # list.append() is a thread-safe operation in CPython, yet the safety
+        # is not guranteed by the language itself. So the lock is used here to
+        # ensure the code works properly even when running on alternative
+        # implementations.
+        with self._lock:
+            return self._stack.pop()
+
+    @_wraps(Box.put)
+    def put(self, *args, **kwargs):
+        """The same as :meth:`Box.put` but for a box at the top."""
+        return self._topbox.put(*args, **kwargs)
+
+    @_wraps(Box.get)
+    def get(self, *args, **kwargs):
+        """The same as :meth:`Box.get` but for a box at the top."""
+        return self._topbox.get(*args, **kwargs)
+
+    @_wraps(Box.pass_)
+    def pass_(self, *args, **kwargs):
+        """The same as :meth:`Box.pass_` but for a box at the top."""
+        # Box.pass_(topbox, *args, **kwargs) does not work in Python 2 because
+        # Box.pass_ is an unbound method, and unbound methods require a class
+        # instance as its first argument. Therefore, we need a workaround to
+        # extract a function without "method" wrapping, so we can pass anything
+        # as the first argument.
+        return vars(Box)['pass_'](self._topbox, *args, **kwargs)
+
+
+_instance = Stack('shared')
+
+
+@_wraps(Stack.push, _instance)
+def push(*args, **kwargs):
+    """The same as :meth:`Stack.push` but for a shared stack instance."""
+    return _instance.push(*args, **kwargs)
+
+
+@_wraps(Stack.pop, _instance)
+def pop(*args, **kwargs):
+    """The same as :meth:`Stack.pop` but for a shared stack instance."""
+    return _instance.pop(*args, **kwargs)
+
+
+@_wraps(Stack.put, _instance)
 def put(*args, **kwargs):
-    """The same as :meth:`Box.put` but for a box at the top of the stack."""
-    return _topbox.put(*args, **kwargs)
+    """The same as :meth:`Stack.put` but for a shared stack instance."""
+    return _instance.put(*args, **kwargs)
 
 
-@_wraps(Box.get)
+@_wraps(Stack.get, _instance)
 def get(*args, **kwargs):
-    """The same as :meth:`Box.get` but for a box at the top of the stack."""
-    return _topbox.get(*args, **kwargs)
+    """The same as :meth:`Stack.get` but for a shared stack instance."""
+    return _instance.get(*args, **kwargs)
 
 
-@_wraps(Box.pass_)
+@_wraps(Stack.pass_, _instance)
 def pass_(*args, **kwargs):
-    """The same as :meth:`Box.pass_` but for a box at the top of the stack."""
-    # Box.pass_(_topbox, *args, **kwargs) does not work in Python 2 because
-    # Box.pass_ is an unbound method, and unbound methods require class
-    # instance as its first argument. Therefore, we need a workaround to
-    # extract a function without "method" wrapping, so we can pass anything
-    # as the first argument.
-    return vars(Box)['pass_'](_topbox, *args, **kwargs)
+    """The same as :meth:`Stack.pass_` but for a shared stack instance."""
+    return _instance.pass_(*args, **kwargs)
