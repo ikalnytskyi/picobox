@@ -7,7 +7,11 @@ import contextlib
 from ._box import Box, ChainBox
 
 
-def _wraps(method, instance=None):
+def _copy_signature(method, instance=None):
+    # This is a workaround to overcome 'sphinx.ext.autodoc' inability to
+    # retrieve a docstring of a bound method. Here's the trick - we create
+    # a partial function, and autodoc can deal with partially applied
+    # functions.
     if instance:
         method = functools.partial(method, instance)
 
@@ -153,17 +157,17 @@ class Stack(object):
         with self._lock:
             return self._stack.pop()
 
-    @_wraps(Box.put)
+    @_copy_signature(Box.put)
     def put(self, *args, **kwargs):
         """The same as :meth:`Box.put` but for a box at the top."""
         return self._topbox.put(*args, **kwargs)
 
-    @_wraps(Box.get)
+    @_copy_signature(Box.get)
     def get(self, *args, **kwargs):
         """The same as :meth:`Box.get` but for a box at the top."""
         return self._topbox.get(*args, **kwargs)
 
-    @_wraps(Box.pass_)
+    @_copy_signature(Box.pass_)
     def pass_(self, *args, **kwargs):
         """The same as :meth:`Box.pass_` but for a box at the top."""
         # Box.pass_(topbox, *args, **kwargs) does not work in Python 2 because
@@ -177,31 +181,31 @@ class Stack(object):
 _instance = Stack('shared')
 
 
-@_wraps(Stack.push, _instance)
+@_copy_signature(Stack.push, _instance)
 def push(*args, **kwargs):
     """The same as :meth:`Stack.push` but for a shared stack instance."""
     return _instance.push(*args, **kwargs)
 
 
-@_wraps(Stack.pop, _instance)
+@_copy_signature(Stack.pop, _instance)
 def pop(*args, **kwargs):
     """The same as :meth:`Stack.pop` but for a shared stack instance."""
     return _instance.pop(*args, **kwargs)
 
 
-@_wraps(Stack.put, _instance)
+@_copy_signature(Stack.put, _instance)
 def put(*args, **kwargs):
     """The same as :meth:`Stack.put` but for a shared stack instance."""
     return _instance.put(*args, **kwargs)
 
 
-@_wraps(Stack.get, _instance)
+@_copy_signature(Stack.get, _instance)
 def get(*args, **kwargs):
     """The same as :meth:`Stack.get` but for a shared stack instance."""
     return _instance.get(*args, **kwargs)
 
 
-@_wraps(Stack.pass_, _instance)
+@_copy_signature(Stack.pass_, _instance)
 def pass_(*args, **kwargs):
     """The same as :meth:`Stack.pass_` but for a shared stack instance."""
     return _instance.pass_(*args, **kwargs)
