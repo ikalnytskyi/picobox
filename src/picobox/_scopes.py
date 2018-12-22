@@ -71,7 +71,16 @@ class threadlocal(Scope):
 
 
 class contextvars(Scope):
-    """Share instances across the same execution context (:pep:`567`)."""
+    """Share instances across the same execution context (:pep:`567`).
+
+    Since `asyncio does support context variables`__, the scope could be used
+    in asynchronous applications to share dependencies between coroutines of
+    the same :class:`asyncio.Task`.
+
+    .. __: https://docs.python.org/3.7/library/contextvars.html#asyncio-support
+
+    .. versionadded:: 2.1
+    """
 
     def __init__(self):
         self._store = {}

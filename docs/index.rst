@@ -302,12 +302,6 @@ Scopes
 .. autodata:: contextvars
     :annotation:
 
-    Since `asyncio does support context variables`__, the scope could be used
-    in asynchronous applications to share dependencies between coroutines of
-    the same :class:`asyncio.Task`.
-
-    .. __: https://docs.python.org/3.7/library/contextvars.html#asyncio-support
-
 .. autodata:: noscope
     :annotation:
 

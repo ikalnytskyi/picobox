@@ -220,6 +220,8 @@ class ChainBox(Box):
 
     :param boxes: (optional) A list of boxes to lookup into. If no boxes are
         passed, an empty box is created and used as underlying box instead.
+
+    .. versionadded:: 1.1
     """
 
     def __init__(self, *boxes):

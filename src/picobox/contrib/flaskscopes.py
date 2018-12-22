@@ -25,7 +25,17 @@ class _flaskscope(picobox.Scope):
 
 
 class application(_flaskscope):
-    """Share instances across the same Flask (HTTP) application."""
+    """Share instances across the same Flask (HTTP) application.
+
+    In most cases can be used interchangeably with :class:`picobox.singleton`
+    scope. Comes around when you have `multiple Flask applications`__ and you
+    want to have independent instances for each Flask application, despite
+    the fact they are running in the same WSGI context.
+
+    .. __: http://flask.pocoo.org/docs/1.0/patterns/appdispatch/
+
+    .. versionadded:: 2.2
+    """
 
     @property
     def _store(self):
@@ -33,7 +43,10 @@ class application(_flaskscope):
 
 
 class request(_flaskscope):
-    """Share instances across the same Flask (HTTP) request."""
+    """Share instances across the same Flask (HTTP) request.
+
+    .. versionadded:: 2.2
+    """
 
     @property
     def _store(self):
