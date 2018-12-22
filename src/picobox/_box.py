@@ -29,7 +29,7 @@ class Box(object):
     exactly when to reuse them or when to create new ones. That is to say each
     scope defines a set of rules for when to reuse dependencies.
 
-    Here's a minimal example of how Box instance can be used::
+    Here's a minimal example of how a Box instance can be used::
 
         import picobox
 
