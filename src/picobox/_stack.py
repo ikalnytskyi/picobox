@@ -47,7 +47,46 @@ def _create_push_context_manager(box, pop_callback):
 
 
 class Stack(object):
-    """
+    """Stack is a dependency injection (DI) container for containers (boxes).
+
+    While :class:`Box` is a great way to manage dependencies, it has no means
+    to override them. This might be handy most of all in tests, where you
+    usually need to provide a special set of dependencies configured for
+    test purposes. This is where :class:`Stack` comes in. It provides the very
+    same interface Box does, but proxies all calls to a box on the top.
+
+    This basically means you can define injection points once, but change
+    dependencies on the fly by changing DI containers (boxes) on the stack.
+    Here's a minimal example of how a stack can be used::
+
+        import picobox
+
+        stack = picobox.Stack()
+
+        @stack.pass_('magic')
+        def do(magic):
+            return magic + 1
+
+        foobox = picobox.Box()
+        foobox.put('magic', 42)
+
+        barbox = picobox.Box()
+        barbox.put('magic', 13)
+
+        with stack.push(foobox):
+            with stack.push(barbox):
+                assert do() == 14
+            assert do() == 43
+
+    .. note::
+
+        Usually you want to have only one stack instance to wire things up.
+        That's why picobox comes with pre-created stack instance. You can
+        work with that instance using :func:`push`, :func:`pop`, :func:`put`,
+        :func:`get` and :func:`pass_` functions.
+
+    :param name: (optional) A name of the stack.
+
     .. versionadded:: 2.2
     """
 
@@ -77,47 +116,6 @@ class Stack(object):
         top of the stack on exit. Can also be used as a regular function, in
         which case it's up to callers to perform a corresponding call to
         :meth:`.pop`, when they are done with the box.
-
-        The box on the top is used by :meth:`.put`, :meth:`.get` and
-        :meth:`.pass_` methods. Together they define a so called Picobox's
-        stacked interface. The idea behind the stacked interface is to provide
-        a way to easily switch DI containers (boxes) without changing
-        injections.
-
-        Here's a minimal example of how :meth:`.push` can be used as a context
-        manager::
-
-            import picobox
-
-            stack = picobox.Stack()
-
-            @stack.pass_('magic')
-            def do(magic):
-                return magic + 1
-
-            foobox = picobox.Box()
-            foobox.put('magic', 42)
-
-            barbox = picobox.Box()
-            barbox.put('magic', 13)
-
-            with stack.push(foobox):
-                with stack.push(barbox):
-                    assert do() == 14
-                assert do() == 43
-
-        As a regular function::
-
-            stack = picobox.Stack()
-
-            stack.push(foobox)
-            stack.push(barbox)
-
-            assert do() == 14
-            stack.pop()
-
-            assert do() == 43
-            stack.pop()
 
         :param box: A :class:`Box` instance to push to the top of the stack.
         :param chain: (optional) Look up missed keys one level down the stack.
