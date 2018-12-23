@@ -181,13 +181,19 @@ _instance = Stack('shared')
 
 @_copy_signature(Stack.push, _instance)
 def push(*args, **kwargs):
-    """The same as :meth:`Stack.push` but for a shared stack instance."""
+    """The same as :meth:`Stack.push` but for a shared stack instance.
+
+    .. versionadded:: 1.1 ``chain`` parameter
+    """
     return _instance.push(*args, **kwargs)
 
 
 @_copy_signature(Stack.pop, _instance)
 def pop(*args, **kwargs):
-    """The same as :meth:`Stack.pop` but for a shared stack instance."""
+    """The same as :meth:`Stack.pop` but for a shared stack instance.
+
+    .. versionadded:: 2.0
+    """
     return _instance.pop(*args, **kwargs)
 
 
