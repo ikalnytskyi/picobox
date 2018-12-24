@@ -88,6 +88,33 @@ def test_scope_get_keyerror(request, scopename, ctx, supported_key):
 
 @pytest.mark.parametrize('scopename, ctx', [
     ('appscope', 'appcontext'),
+    ('reqscope', 'reqcontext'),
+])
+def test_scope_state_not_leaked(request, scopename, ctx):
+    ctxfn = request.getfixturevalue(ctx)
+
+    scope_a = request.getfixturevalue(scopename)
+    value_a = object()
+
+    scope_b = type(scope_a)()
+    value_b = object()
+
+    with ctxfn():
+        scope_a.set('the-key', value_a)
+        assert scope_a.get('the-key') is value_a
+
+        with pytest.raises(KeyError, match='the-key'):
+            scope_b.get('the-key')
+
+        scope_b.set('the-key', value_b)
+        assert scope_b.get('the-key') is value_b
+
+        scope_a.set('the-key', value_a)
+        assert scope_a.get('the-key') is value_a
+
+
+@pytest.mark.parametrize('scopename, ctx', [
+    ('appscope', 'appcontext'),
 ])
 def test_scope_value_shared(request, scopename, ctx):
     scope = request.getfixturevalue(scopename)
