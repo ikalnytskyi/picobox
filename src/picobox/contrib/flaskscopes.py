@@ -1,5 +1,7 @@
 """Scopes for Flask framework."""
 
+import uuid
+
 import picobox
 import flask
 
@@ -9,17 +11,32 @@ class _flaskscope(picobox.Scope):
 
     _store = None
 
+    def __init__(self):
+        # Both application and request scopes are merely proxies to
+        # corresponding storage objects in Flask. This means multiple
+        # scope instances will share the same storage object under the
+        # hood, and this is not what we want. So we need to generate
+        # some unique key per scope instance and use that key to
+        # distinguish dependencies stored by different scope instances.
+        self._uuid = str(uuid.uuid4())
+
     def set(self, key, value):
         try:
             dependencies = self._store.__dependencies__
         except AttributeError:
             dependencies = self._store.__dependencies__ = {}
+
+        try:
+            dependencies = dependencies[self._uuid]
+        except KeyError:
+            dependencies = dependencies.setdefault(self._uuid, {})
+
         dependencies[key] = value
 
     def get(self, key):
         try:
-            rv = self._store.__dependencies__[key]
-        except AttributeError:
+            rv = self._store.__dependencies__[self._uuid][key]
+        except (AttributeError, KeyError):
             raise KeyError(key)
         return rv
 
