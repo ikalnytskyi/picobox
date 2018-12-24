@@ -333,7 +333,8 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
-Not released changes.
+2.2.0
+`````
 
 * Fix ``picobox.singleton``, ``picobox.threadlocal`` & ``picobox.contextvars``
   scopes so they do not fail with unexpected exception when non-string
