@@ -1,6 +1,4 @@
-dist: trusty
-sudo: false
-
+dist: xenial
 language: python
 cache: pip
 
@@ -22,11 +20,11 @@ jobs:
   include:
     - stage: lint
       env: TOXENV=metadata
-      python: '3.6'
+      python: '3.7'
 
     - stage: lint
       env: TOXENV=pep8
-      python: '3.6'
+      python: '3.7'
 
     - stage: test
       env: TOXENV=py27
@@ -47,20 +45,20 @@ jobs:
     - stage: test
       env: TOXENV=py37
       python: '3.7'
-      dist: xenial
-      sudo: true
 
     - stage: test
       env: TOXENV=pypy
       python: 'pypy'
+      dist: trusty
 
     - stage: test
       env: TOXENV=pypy3
       python: 'pypy3'
+      dist: trusty
 
     - stage: docs
       env: TOXENV=docs
-      python: '3.6'
+      python: '3.7'
 
     - stage: pypi
       deploy:
