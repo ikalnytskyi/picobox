@@ -357,6 +357,20 @@ def test_box_pass_key_type(args, kwargs, rv, boxclass):
     assert fn(*args, **kwargs) == rv
 
 
+def test_box_pass_inject_only(boxclass):
+    testbox = boxclass()
+    testbox.put('b', 10)
+
+    @testbox.pass_('b', inject_only=True)
+    def fn(a, b):
+        return a + b
+
+    with pytest.raises(TypeError) as excinfo:
+        fn(1, 2)
+
+    assert str(excinfo.value) == "fn() got an unexpected keyword argument 'b'"
+
+
 def test_box_pass_unexpected_argument(boxclass):
     testbox = boxclass()
     testbox.put('d', 10)

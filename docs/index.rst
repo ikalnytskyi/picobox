@@ -333,6 +333,10 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
+* Add ``inject_only`` parameter to ``@picobox.pass_`` decorator. When ``True``,
+  only injection for an argument is allowed; all explicit passings are
+  rejected.
+
 2.2.0
 `````
 

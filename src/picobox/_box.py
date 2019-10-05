@@ -148,7 +148,7 @@ class Box(object):
 
         return value
 
-    def pass_(self, key, as_=_missing):
+    def pass_(self, key, as_=_missing, inject_only=False):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -161,13 +161,15 @@ class Box(object):
             calling :meth:`.put` method.
         :param as\_: (optional) Bind a dependency associated with `key` to
             a function argument named `as_`. If not passed, the same as `key`.
+        :param inject_only: (optional) When passed and ``True``, only
+            injections for a given parameter are allowed.
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
         def decorator(fn):
             # If pass_ decorator is called second time (or more), we can squash
             # the calls into one and reduce runtime costs of injection.
             if hasattr(fn, '__dependencies__'):
-                fn.__dependencies__.append((key, as_))
+                fn.__dependencies__.append((key, as_, inject_only))
                 return fn
 
             @functools.wraps(fn)
@@ -175,7 +177,7 @@ class Box(object):
                 signature = _compat.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
-                for key, as_ in wrapper.__dependencies__:
+                for key, as_, inject_only in wrapper.__dependencies__:
                     if as_ is _missing:
                         as_ = key
 
@@ -183,10 +185,14 @@ class Box(object):
                     # if and only if they weren't passed explicitly by the
                     # caller code. A rationale behind is to be compatible with
                     # calls written prior picobox integration.
-                    if as_ not in arguments.arguments:
+                    if as_ not in arguments.arguments and not inject_only:
                         kwargs[as_] = self.get(key)
+                    elif as_ in arguments.arguments and inject_only:
+                        raise TypeError(
+                            "%s() got an unexpected keyword argument '%s'"
+                            % (fn.__name__, as_))
                 return fn(*args, **kwargs)
-            wrapper.__dependencies__ = [(key, as_)]
+            wrapper.__dependencies__ = [(key, as_, inject_only)]
             return wrapper
         return decorator
 
