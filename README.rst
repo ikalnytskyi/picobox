@@ -10,8 +10,8 @@ Picobox
 .. image:: https://codecov.io/gh/ikalnytskyi/picobox/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/ikalnytskyi/picobox
 
-.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
-   :target: https://saythanks.io/to/ikalnytskyi
+.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg 
+   :target: https://saythanks.io/to/ihor@kalnytskyi.com
 
 Picobox is opinionated dependency injection framework designed to be clean,
 pragmatic and with Python in mind. No complex graphs, no implicit injections,
@@ -32,7 +32,7 @@ Features
 * Support scopes (e.g. singleton, threadlocal, contextvars).
 * Push boxes on stack, and use the top one to access values.
 * Thread-safe.
-* Lightweight (~213 LOC including scopes).
+* Lightweight (~450 LOC including scopes).
 * Zero dependencies (on python3).
 * Pure Python.
 
