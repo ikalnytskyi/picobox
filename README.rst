@@ -4,11 +4,8 @@ Picobox
 .. image:: https://img.shields.io/pypi/v/picobox.svg
    :target: https://pypi.python.org/pypi/picobox
 
-.. image:: https://travis-ci.com/ikalnytskyi/picobox.svg?branch=master
-   :target: https://travis-ci.com/ikalnytskyi/picobox.svg?branch=master
-
-.. image:: https://codecov.io/gh/ikalnytskyi/picobox/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/ikalnytskyi/picobox
+.. image:: https://img.shields.io/github/workflow/status/ikalnytskyi/picobox/ci/master
+   :target: https://github.com/ikalnytskyi/picobox
 
 .. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg 
    :target: https://saythanks.io/to/ihor@kalnytskyi.com
