@@ -8,11 +8,8 @@ try:
 except ImportError:
     _contextvars = None
 
-from . import _compat
 
-
-@_compat.add_metaclass(abc.ABCMeta)
-class Scope(object):
+class Scope(metaclass=abc.ABCMeta):
     """Scope is an execution context based storage interface.
 
     Execution context is a mechanism of storing and accessing data bound to a

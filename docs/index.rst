@@ -333,8 +333,21 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
+3.0.0
+`````
+
+(unreleased)
+
+* Drop ``Python 2.7`` support. It's dead for more than a year anyway. Those who
+  want to use picobox with ``Python 2`` should stick with ``2.x`` branch.
+
+* Drop ``Python 3.4`` and ``Python 3.5`` support. Everyone is advised to move
+  on to ``Python 3.6`` at least.
+
 2.2.0
 `````
+
+Released on Dec 24, 2018.
 
 * Fix ``picobox.singleton``, ``picobox.threadlocal`` & ``picobox.contextvars``
   scopes so they do not fail with unexpected exception when non-string
@@ -349,6 +362,8 @@ Release Notes
 
 2.1.0
 `````
+
+Released on Sep 25, 2018.
 
 * Add ``picobox.contextvars`` scope (python 3.7 and above) that can be used
   in asyncio applications to have a separate set of dependencies in all

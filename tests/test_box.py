@@ -8,8 +8,6 @@ import traceback
 import pytest
 import picobox
 
-from picobox import _compat
-
 
 def test_box_put_key(boxclass, supported_key):
     testbox = boxclass()
@@ -462,7 +460,7 @@ def test_chainbox_isinstance_box():
     for name, _ in inspect.getmembers(picobox.Box) if not name.startswith('_')
 ])
 def test_chainbox_box_interface(name):
-    boxsignature = _compat.signature(getattr(picobox.Box(), name))
-    chainboxsignature = _compat.signature(getattr(picobox.ChainBox(), name))
+    boxsignature = inspect.signature(getattr(picobox.Box(), name))
+    chainboxsignature = inspect.signature(getattr(picobox.ChainBox(), name))
 
     assert boxsignature == chainboxsignature
