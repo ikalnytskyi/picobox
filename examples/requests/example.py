@@ -5,19 +5,20 @@ import picobox
 import requests
 
 
-@picobox.pass_('session')
+@picobox.pass_("session")
 def spam(session):
-    return 'thread={}; session={}; ip={}'.format(
+    return "thread={}; session={}; ip={}".format(
         threading.get_ident(),
         id(session),
-        session.get('https://httpbin.org/ip').json()['origin'])
+        session.get("https://httpbin.org/ip").json()["origin"],
+    )
 
 
 # According to https://github.com/kennethreitz/requests/issues/2766
 # requests.Session() is not thread-safe. Therefore we need to create
 # a separate session for each thread.
 box = picobox.Box()
-box.put('session', factory=requests.Session, scope=picobox.threadlocal)
+box.put("session", factory=requests.Session, scope=picobox.threadlocal)
 
 with picobox.push(box):
     # We have 3 threads and 10 spam calls which means there should be no more

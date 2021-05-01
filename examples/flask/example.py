@@ -3,21 +3,21 @@ from flask import Flask, jsonify, request
 from tools import spam
 
 
-app = Flask('example')
+app = Flask("example")
 
 
-@app.route('/')
+@app.route("/")
 def index():
-    return jsonify({'spam': spam()})
+    return jsonify({"spam": spam()})
 
 
 # @app.route() internally saves wrapped function inside, so decorators order
 # here does matter and if you want to inject some argument using picobox,
 # you ought to apply @picobox.pass_ before @app.route.
-@app.route('/magic')
-@picobox.pass_('magic')
+@app.route("/magic")
+@picobox.pass_("magic")
 def magic(magic):
-    return jsonify({'magic': magic})
+    return jsonify({"magic": magic})
 
 
 @app.before_request
@@ -25,8 +25,8 @@ def serve_eggs_with_spam():
     box = picobox.Box()
 
     # on requests to /eggs, override the value of magic with 'spam'
-    if request.path == '/eggs':
-        box.put('magic', 'spam')
+    if request.path == "/eggs":
+        box.put("magic", "spam")
 
     picobox.push(box, chain=True)
 
@@ -38,7 +38,7 @@ def take_spam_away(response):
     return response
 
 
-@app.route('/eggs')
-@picobox.pass_('magic')
+@app.route("/eggs")
+@picobox.pass_("magic")
 def eggs(magic):
-    return jsonify({'magic': magic})
+    return jsonify({"magic": magic})
