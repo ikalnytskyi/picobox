@@ -7,7 +7,7 @@ Picobox
 .. image:: https://img.shields.io/github/workflow/status/ikalnytskyi/picobox/ci/master
    :target: https://github.com/ikalnytskyi/picobox
 
-.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg 
+.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
    :target: https://saythanks.io/to/ihor@kalnytskyi.com
 
 Picobox is opinionated dependency injection framework designed to be clean,

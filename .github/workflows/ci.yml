@@ -22,9 +22,9 @@ jobs:
 
       - name: Run lints
         run: |
-          python -m tox -e metadata,pep8
+          python -m tox -e pre-commit
 
-  pytest:
+  test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
