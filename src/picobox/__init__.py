@@ -11,19 +11,17 @@ except ImportError:
 
 
 __all__ = [
-    'Box',
-    'ChainBox',
-
-    'Scope',
-    'singleton',
-    'threadlocal',
-    'contextvars',
-    'noscope',
-
-    'Stack',
-    'push',
-    'pop',
-    'put',
-    'get',
-    'pass_',
+    "Box",
+    "ChainBox",
+    "Scope",
+    "singleton",
+    "threadlocal",
+    "contextvars",
+    "noscope",
+    "Stack",
+    "push",
+    "pop",
+    "put",
+    "get",
+    "pass_",
 ]

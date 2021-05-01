@@ -13,7 +13,7 @@ from . import _scopes
 # API reference (see docs).
 class _missing:
     def __repr__(self):
-        return '<optional>'
+        return "<optional>"
 
 
 _missing = _missing()
@@ -71,10 +71,8 @@ class Box(object):
             a class that implements :class:`Scope` interface.
         :raises ValueError: If both `value` and `factory` are passed.
         """
-        if value is not _missing \
-                and (factory is not _missing or scope is not _missing):
-            raise ValueError(
-                "either 'value' or 'factory'/'scope' pair must be passed")
+        if value is not _missing and (factory is not _missing or scope is not _missing):
+            raise ValueError("either 'value' or 'factory'/'scope' pair must be passed")
 
         # Value is a syntax sugar Box supports to store objects "As Is"
         # with singleton scope. In other words it's essentially the same
@@ -83,8 +81,10 @@ class Box(object):
         # in this case it wouldn't support values which are callable by
         # its nature.
         if value is not _missing:
+
             def factory():
                 return value
+
             scope = _scopes.singleton
 
         # If scope is not explicitly passed, Box assumes "No Scope"
@@ -164,10 +164,11 @@ class Box(object):
             a function argument named `as_`. If not passed, the same as `key`.
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
+
         def decorator(fn):
             # If pass_ decorator is called second time (or more), we can squash
             # the calls into one and reduce runtime costs of injection.
-            if hasattr(fn, '__dependencies__'):
+            if hasattr(fn, "__dependencies__"):
                 fn.__dependencies__.append((key, as_))
                 return fn
 
@@ -187,8 +188,10 @@ class Box(object):
                     if as_ not in arguments.arguments:
                         kwargs[as_] = self.get(key)
                 return fn(*args, **kwargs)
+
             wrapper.__dependencies__ = [(key, as_)]
             return wrapper
+
         return decorator
 
 

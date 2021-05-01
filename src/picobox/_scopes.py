@@ -86,7 +86,7 @@ class contextvars(Scope):
         try:
             var = self._store[key]
         except KeyError:
-            var = self._store[key] = _contextvars.ContextVar('picobox')
+            var = self._store[key] = _contextvars.ContextVar("picobox")
         var.set(value)
 
     def get(self, key):

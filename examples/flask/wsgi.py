@@ -2,7 +2,7 @@ import picobox
 
 
 box = picobox.Box()
-box.put('magic', 12)
+box.put("magic", 12)
 
 # The app instance exposed via this module is used to run the app for
 # development (flask run) as well as for production (uWSGI, Gunicorn).

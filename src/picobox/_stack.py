@@ -24,12 +24,14 @@ def _copy_signature(method, instance=None):
 
 def _create_stack_proxy(stack, empty_stack_error):
     """Create an object that proxies all calls to the top of the stack."""
+
     class _StackProxy(object):
         def __getattribute__(self, name):
             try:
                 return getattr(stack[-1], name)
             except IndexError:
                 raise RuntimeError(empty_stack_error)
+
     return _StackProxy()
 
 
@@ -100,14 +102,15 @@ class Stack(object):
         # that mimic Box interface but deal with a box on the top instead.
         # While it's not completely necessary for `put()` and `get()`, it's
         # crucial for `pass_()` due to its laziness and thus late evaluation.
-        self._topbox = _create_stack_proxy(self._stack, (
-            'No boxes found on the stack, please `.push()` a box first.'))
+        self._topbox = _create_stack_proxy(
+            self._stack, "No boxes found on the stack, please `.push()` a box first."
+        )
 
     def __repr__(self):
         name = self._name
         if not self._name:
-            name = '0x%x' % id(self)
-        return '<Stack (%s)>' % name
+            name = "0x%x" % id(self)
+        return "<Stack (%s)>" % name
 
     def push(self, box, chain=False):
         """Push a :class:`Box` instance to the top of the stack.
@@ -173,10 +176,10 @@ class Stack(object):
         # instance as its first argument. Therefore, we need a workaround to
         # extract a function without "method" wrapping, so we can pass anything
         # as the first argument.
-        return vars(Box)['pass_'](self._topbox, *args, **kwargs)
+        return vars(Box)["pass_"](self._topbox, *args, **kwargs)
 
 
-_instance = Stack('shared')
+_instance = Stack("shared")
 
 
 @_copy_signature(Stack.push, _instance)

@@ -16,27 +16,27 @@ def test_box_put_key(boxclass, teststack, supported_key):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        teststack.put(supported_key, 'the-value')
+        teststack.put(supported_key, "the-value")
 
-    assert testbox.get(supported_key) == 'the-value'
+    assert testbox.get(supported_key) == "the-value"
 
 
 def test_box_put_value(boxclass, teststack, supported_value):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        teststack.put('the-key', supported_value)
+        teststack.put("the-key", supported_value)
 
-    assert testbox.get('the-key') is supported_value
+    assert testbox.get("the-key") is supported_value
 
 
 def test_box_put_factory(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        teststack.put('the-key', factory=object)
+        teststack.put("the-key", factory=object)
 
-    objects = [testbox.get('the-key') for _ in range(10)]
+    objects = [testbox.get("the-key") for _ in range(10)]
 
     assert len(objects) == 10
     assert len(set(map(id, objects))) == 10
@@ -46,9 +46,9 @@ def test_box_put_factory_singleton_scope(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        teststack.put('the-key', factory=object, scope=picobox.singleton)
+        teststack.put("the-key", factory=object, scope=picobox.singleton)
 
-    objects = [testbox.get('the-key') for _ in range(10)]
+    objects = [testbox.get("the-key") for _ in range(10)]
 
     assert len(objects) == 10
     assert len(set(map(id, objects))) == 1
@@ -57,15 +57,15 @@ def test_box_put_factory_singleton_scope(boxclass, teststack):
 def test_box_put_factory_dependency(boxclass, teststack):
     testbox = boxclass()
 
-    @teststack.pass_('a')
+    @teststack.pass_("a")
     def fn(a):
         return a + 1
 
     with teststack.push(testbox):
-        teststack.put('a', 13)
-        teststack.put('b', factory=fn)
+        teststack.put("a", 13)
+        teststack.put("b", factory=fn)
 
-        assert teststack.get('b') == 14
+        assert teststack.get("b") == 14
 
 
 def test_box_put_value_and_factory(boxclass, teststack):
@@ -73,7 +73,7 @@ def test_box_put_value_and_factory(boxclass, teststack):
 
     with teststack.push(testbox):
         with pytest.raises(ValueError) as excinfo:
-            teststack.put('the-key', 42, factory=object)
+            teststack.put("the-key", 42, factory=object)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
 
 
@@ -82,32 +82,33 @@ def test_box_put_value_and_scope(boxclass, teststack):
 
     with teststack.push(testbox):
         with pytest.raises(ValueError) as excinfo:
-            teststack.put('the-key', 42, scope=picobox.threadlocal)
+            teststack.put("the-key", 42, scope=picobox.threadlocal)
     excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
 
 
 def test_box_put_runtimeerror(boxclass, teststack):
     with pytest.raises(RuntimeError) as excinfo:
-        teststack.put('the-key', object())
+        teststack.put("the-key", object())
 
     assert str(excinfo.value) == (
-        'No boxes found on the stack, please `.push()` a box first.')
+        "No boxes found on the stack, please `.push()` a box first."
+    )
 
 
 def test_box_get_value(boxclass, teststack, supported_value):
     testbox = boxclass()
-    testbox.put('the-key', supported_value)
+    testbox.put("the-key", supported_value)
 
     with teststack.push(testbox):
-        assert teststack.get('the-key') is supported_value
+        assert teststack.get("the-key") is supported_value
 
 
 def test_box_get_keyerror(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        with pytest.raises(KeyError, match='the-key'):
-            teststack.get('the-key')
+        with pytest.raises(KeyError, match="the-key"):
+            teststack.get("the-key")
 
 
 def test_box_get_default(boxclass, teststack):
@@ -115,80 +116,87 @@ def test_box_get_default(boxclass, teststack):
     sentinel = object()
 
     with teststack.push(testbox):
-        assert teststack.get('the-key', sentinel) is sentinel
+        assert teststack.get("the-key", sentinel) is sentinel
 
 
-@pytest.mark.parametrize('kwargs', [
-    {},
-    {'chain': False},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"chain": False},
+    ],
+)
 def test_box_get_from_top(boxclass, teststack, kwargs):
     testbox_a = boxclass()
-    testbox_a.put('the-key', 'a')
-    testbox_a.put('the-pin', 'a')
+    testbox_a.put("the-key", "a")
+    testbox_a.put("the-pin", "a")
 
     testbox_b = boxclass()
-    testbox_b.put('the-key', 'b')
+    testbox_b.put("the-key", "b")
 
     with teststack.push(testbox_a):
-        assert teststack.get('the-key') == 'a'
-        assert teststack.get('the-pin') == 'a'
+        assert teststack.get("the-key") == "a"
+        assert teststack.get("the-pin") == "a"
 
         with teststack.push(testbox_b, **kwargs):
-            assert teststack.get('the-key') == 'b'
+            assert teststack.get("the-key") == "b"
 
-            with pytest.raises(KeyError, match='the-pin'):
-                teststack.get('the-pin')
+            with pytest.raises(KeyError, match="the-pin"):
+                teststack.get("the-pin")
 
-        assert teststack.get('the-key') == 'a'
-        assert teststack.get('the-pin') == 'a'
+        assert teststack.get("the-key") == "a"
+        assert teststack.get("the-pin") == "a"
 
 
 def test_box_get_from_top_chain(boxclass, teststack):
     testbox_a = boxclass()
-    testbox_a.put('the-key', 'a')
-    testbox_a.put('the-pin', 'a')
+    testbox_a.put("the-key", "a")
+    testbox_a.put("the-pin", "a")
 
     testbox_b = boxclass()
-    testbox_b.put('the-key', 'b')
+    testbox_b.put("the-key", "b")
 
     testbox_c = boxclass()
-    testbox_c.put('the-tip', 'c')
+    testbox_c.put("the-tip", "c")
 
     with teststack.push(testbox_a):
-        assert teststack.get('the-key') == 'a'
-        assert teststack.get('the-pin') == 'a'
+        assert teststack.get("the-key") == "a"
+        assert teststack.get("the-pin") == "a"
 
         with teststack.push(testbox_b, chain=True):
-            assert teststack.get('the-key') == 'b'
-            assert teststack.get('the-pin') == 'a'
+            assert teststack.get("the-key") == "b"
+            assert teststack.get("the-pin") == "a"
 
             with teststack.push(testbox_c, chain=True):
-                assert teststack.get('the-tip') == 'c'
-                assert teststack.get('the-key') == 'b'
-                assert teststack.get('the-pin') == 'a'
+                assert teststack.get("the-tip") == "c"
+                assert teststack.get("the-key") == "b"
+                assert teststack.get("the-pin") == "a"
 
 
 def test_box_get_runtimeerror(teststack):
     with pytest.raises(RuntimeError) as excinfo:
-        teststack.get('the-key')
+        teststack.get("the-key")
 
     assert str(excinfo.value) == (
-        'No boxes found on the stack, please `.push()` a box first.')
+        "No boxes found on the stack, please `.push()` a box first."
+    )
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'b': 2, 'c': 3},                15),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"b": 2, "c": 3}, 15),
+    ],
+)
 def test_box_pass_a(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('a', 10)
+    testbox.put("a", 10)
 
-    @teststack.pass_('a')
+    @teststack.pass_("a")
     def fn(a, b, c):
         return a + b + c
 
@@ -196,19 +204,22 @@ def test_box_pass_a(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'c': 3},                        14),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'c': 3},                14),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"c": 3}, 14),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "c": 3}, 14),
+    ],
+)
 def test_box_pass_b(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('b', 10)
+    testbox.put("b", 10)
 
-    @teststack.pass_('b')
+    @teststack.pass_("b")
     def fn(a, b, c):
         return a + b + c
 
@@ -216,20 +227,23 @@ def test_box_pass_b(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1, 2),        {},                              13),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'b': 2},                        13),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'b': 2},                13),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1, 2), {}, 13),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"b": 2}, 13),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2}, 13),
+    ],
+)
 def test_box_pass_c(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('c', 10)
+    testbox.put("c", 10)
 
-    @teststack.pass_('c')
+    @teststack.pass_("c")
     def fn(a, b, c):
         return a + b + c
 
@@ -237,20 +251,23 @@ def test_box_pass_c(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1, 2),        {},                              13),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'b': 2},                        13),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'b': 2},                13),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1, 2), {}, 13),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"b": 2}, 13),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2}, 13),
+    ],
+)
 def test_box_pass_c_default(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('c', 10)
+    testbox.put("c", 10)
 
-    @teststack.pass_('c')
+    @teststack.pass_("c")
     def fn(a, b, c=20):
         return a + b + c
 
@@ -258,23 +275,26 @@ def test_box_pass_c_default(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'c': 3},                       104),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'c': 3},               104),
-    ((),            {'b': 2, 'c': 3},                15),
-    ((),            {'c': 3},                       113),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"c": 3}, 104),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "c": 3}, 104),
+        ((), {"b": 2, "c": 3}, 15),
+        ((), {"c": 3}, 113),
+    ],
+)
 def test_box_pass_ab(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('a', 10)
-    testbox.put('b', 100)
+    testbox.put("a", 10)
+    testbox.put("b", 100)
 
-    @teststack.pass_('a')
-    @teststack.pass_('b')
+    @teststack.pass_("a")
+    @teststack.pass_("b")
     def fn(a, b, c):
         return a + b + c
 
@@ -282,26 +302,29 @@ def test_box_pass_ab(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1, 2),        {},                             103),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'b': 2},                       103),
-    ((1,),          {'c': 3},                        14),
-    ((1,),          {},                             111),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'b': 2},               103),
-    ((),            {'a': 1, 'c': 3},                14),
-    ((),            {'a': 1},                       111),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1, 2), {}, 103),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"b": 2}, 103),
+        ((1,), {"c": 3}, 14),
+        ((1,), {}, 111),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2}, 103),
+        ((), {"a": 1, "c": 3}, 14),
+        ((), {"a": 1}, 111),
+    ],
+)
 def test_box_pass_bc(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('b', 10)
-    testbox.put('c', 100)
+    testbox.put("b", 10)
+    testbox.put("c", 100)
 
-    @teststack.pass_('b')
-    @teststack.pass_('c')
+    @teststack.pass_("b")
+    @teststack.pass_("c")
     def fn(a, b, c):
         return a + b + c
 
@@ -309,24 +332,27 @@ def test_box_pass_bc(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1, 2),        {},                             103),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'b': 2},                       103),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'b': 2},               103),
-    ((),            {'b': 2, 'c': 3},                15),
-    ((),            {'b': 2},                       112),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1, 2), {}, 103),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"b": 2}, 103),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2}, 103),
+        ((), {"b": 2, "c": 3}, 15),
+        ((), {"b": 2}, 112),
+    ],
+)
 def test_box_pass_ac(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('a', 10)
-    testbox.put('c', 100)
+    testbox.put("a", 10)
+    testbox.put("c", 100)
 
-    @teststack.pass_('a')
-    @teststack.pass_('c')
+    @teststack.pass_("a")
+    @teststack.pass_("c")
     def fn(a, b, c):
         return a + b + c
 
@@ -334,29 +360,32 @@ def test_box_pass_ac(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1, 2),        {},                            1003),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'b': 2},                      1003),
-    ((1,),          {'c': 3},                       104),
-    ((1,),          {},                            1101),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'b': 2},              1003),
-    ((),            {'a': 1, 'c': 3},               104),
-    ((),            {'a': 1},                      1101),
-    ((),            {},                            1110),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1, 2), {}, 1003),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"b": 2}, 1003),
+        ((1,), {"c": 3}, 104),
+        ((1,), {}, 1101),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "b": 2}, 1003),
+        ((), {"a": 1, "c": 3}, 104),
+        ((), {"a": 1}, 1101),
+        ((), {}, 1110),
+    ],
+)
 def test_box_pass_abc(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('a', 10)
-    testbox.put('b', 100)
-    testbox.put('c', 1000)
+    testbox.put("a", 10)
+    testbox.put("b", 100)
+    testbox.put("c", 1000)
 
-    @teststack.pass_('a')
-    @teststack.pass_('b')
-    @teststack.pass_('c')
+    @teststack.pass_("a")
+    @teststack.pass_("b")
+    @teststack.pass_("c")
     def fn(a, b, c):
         return a + b + c
 
@@ -364,19 +393,22 @@ def test_box_pass_abc(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, 2, 3),     {},                               6),
-    ((1, 2),        {'c': 3},                         6),
-    ((1,),          {'b': 2, 'c': 3},                 6),
-    ((1,),          {'c': 3},                        14),
-    ((),            {'a': 1, 'b': 2, 'c': 3},         6),
-    ((),            {'a': 1, 'c': 3},                14),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1, 2, 3), {}, 6),
+        ((1, 2), {"c": 3}, 6),
+        ((1,), {"b": 2, "c": 3}, 6),
+        ((1,), {"c": 3}, 14),
+        ((), {"a": 1, "b": 2, "c": 3}, 6),
+        ((), {"a": 1, "c": 3}, 14),
+    ],
+)
 def test_box_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('d', 10)
+    testbox.put("d", 10)
 
-    @teststack.pass_('d', as_='b')
+    @teststack.pass_("d", as_="b")
     def fn(a, b, c):
         return a + b + c
 
@@ -384,17 +416,20 @@ def test_box_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((1, ),         {},                               1),
-    ((),            {'x': 1},                         1),
-    ((),            {},                              42),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((1,), {}, 1),
+        ((), {"x": 1}, 1),
+        ((), {}, 42),
+    ],
+)
 def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put('x', 42)
+    testbox.put("x", 42)
 
     class Foo:
-        @teststack.pass_('x')
+        @teststack.pass_("x")
         def __init__(self, x):
             self.x = x
 
@@ -402,11 +437,14 @@ def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
         assert Foo(*args, **kwargs).x == rv
 
 
-@pytest.mark.parametrize('args, kwargs, rv', [
-    ((0, ),         {},                              41),
-    ((),            {'x': 0},                        41),
-    ((),            {},                              42),
-])
+@pytest.mark.parametrize(
+    "args, kwargs, rv",
+    [
+        ((0,), {}, 41),
+        ((), {"x": 0}, 41),
+        ((), {}, 42),
+    ],
+)
 def test_box_pass_key_type(boxclass, teststack, args, kwargs, rv):
     class key:
         pass
@@ -414,7 +452,7 @@ def test_box_pass_key_type(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put(key, 1)
 
-    @testbox.pass_(key, as_='x')
+    @testbox.pass_(key, as_="x")
     def fn(x):
         return x + 41
 
@@ -424,9 +462,9 @@ def test_box_pass_key_type(boxclass, teststack, args, kwargs, rv):
 
 def test_box_pass_unexpected_argument(boxclass, teststack):
     testbox = boxclass()
-    testbox.put('d', 10)
+    testbox.put("d", 10)
 
-    @teststack.pass_('d')
+    @teststack.pass_("d")
     def fn(a, b):
         return a + b
 
@@ -440,17 +478,17 @@ def test_box_pass_unexpected_argument(boxclass, teststack):
 def test_box_pass_keyerror(boxclass, teststack):
     testbox = boxclass()
 
-    @teststack.pass_('b')
+    @teststack.pass_("b")
     def fn(a, b):
         return a + b
 
     with teststack.push(testbox):
-        with pytest.raises(KeyError, match='b'):
+        with pytest.raises(KeyError, match="b"):
             fn(1)
 
 
 def test_box_pass_runtimeerror(teststack):
-    @teststack.pass_('a')
+    @teststack.pass_("a")
     def fn(a):
         return a
 
@@ -458,22 +496,26 @@ def test_box_pass_runtimeerror(teststack):
         fn()
 
     assert str(excinfo.value) == (
-        'No boxes found on the stack, please `.push()` a box first.')
+        "No boxes found on the stack, please `.push()` a box first."
+    )
 
 
 def test_box_pass_optimization(boxclass, teststack, request):
     testbox = boxclass()
-    testbox.put('a', 1)
-    testbox.put('b', 1)
-    testbox.put('d', 1)
+    testbox.put("a", 1)
+    testbox.put("b", 1)
+    testbox.put("d", 1)
 
-    @teststack.pass_('a')
-    @teststack.pass_('b')
-    @teststack.pass_('d', as_='c')
+    @teststack.pass_("a")
+    @teststack.pass_("b")
+    @teststack.pass_("d", as_="c")
     def fn(a, b, c):
-        backtrace = list(itertools.dropwhile(
-            lambda frame: frame[2] != request.function.__name__,
-            traceback.extract_stack()))
+        backtrace = list(
+            itertools.dropwhile(
+                lambda frame: frame[2] != request.function.__name__,
+                traceback.extract_stack(),
+            )
+        )
         return backtrace[1:-1]
 
     with teststack.push(testbox):
@@ -482,25 +524,29 @@ def test_box_pass_optimization(boxclass, teststack, request):
 
 def test_box_pass_optimization_complex(boxclass, teststack, request):
     testbox = boxclass()
-    testbox.put('a', 1)
-    testbox.put('b', 1)
-    testbox.put('c', 1)
-    testbox.put('d', 1)
+    testbox.put("a", 1)
+    testbox.put("b", 1)
+    testbox.put("c", 1)
+    testbox.put("d", 1)
 
     def passthrough(fn):
         def wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
+
         return wrapper
 
-    @teststack.pass_('a')
-    @teststack.pass_('b')
+    @teststack.pass_("a")
+    @teststack.pass_("b")
     @passthrough
-    @teststack.pass_('c')
-    @teststack.pass_('d')
+    @teststack.pass_("c")
+    @teststack.pass_("d")
     def fn(a, b, c, d):
-        backtrace = list(itertools.dropwhile(
-            lambda frame: frame[2] != request.function.__name__,
-            traceback.extract_stack()))
+        backtrace = list(
+            itertools.dropwhile(
+                lambda frame: frame[2] != request.function.__name__,
+                traceback.extract_stack(),
+            )
+        )
         return backtrace[1:-1]
 
     with teststack.push(testbox):
@@ -512,60 +558,61 @@ def test_chainbox_put_changes_box(teststack):
     testchainbox = picobox.ChainBox(testbox)
 
     with teststack.push(testchainbox):
-        with pytest.raises(KeyError, match='the-key'):
-            teststack.get('the-key')
-        teststack.put('the-key', 42)
+        with pytest.raises(KeyError, match="the-key"):
+            teststack.get("the-key")
+        teststack.put("the-key", 42)
 
-        assert testbox.get('the-key') == 42
+        assert testbox.get("the-key") == 42
 
 
 def test_chainbox_get_chained(teststack):
     testbox_a = picobox.Box()
-    testbox_a.put('the-key', 42)
+    testbox_a.put("the-key", 42)
 
     testbox_b = picobox.Box()
-    testbox_b.put('the-key', 13)
-    testbox_b.put('the-pin', 12)
+    testbox_b.put("the-key", 13)
+    testbox_b.put("the-pin", 12)
 
     testchainbox = picobox.ChainBox(testbox_a, testbox_b)
 
     with teststack.push(testchainbox):
-        assert testchainbox.get('the-key') == 42
-        assert testchainbox.get('the-pin') == 12
+        assert testchainbox.get("the-key") == 42
+        assert testchainbox.get("the-pin") == 12
 
 
 def test_stack_isolated(boxclass):
     testbox_a = picobox.Box()
-    testbox_a.put('the-key', 42)
+    testbox_a.put("the-key", 42)
 
     testbox_b = picobox.Box()
-    testbox_b.put('the-pin', 12)
+    testbox_b.put("the-pin", 12)
 
     teststack_a = picobox.Stack()
     teststack_b = picobox.Stack()
 
     with teststack_a.push(testbox_a):
         with pytest.raises(RuntimeError) as excinfo:
-            teststack_b.get('the-key')
+            teststack_b.get("the-key")
         assert str(excinfo.value) == (
-            'No boxes found on the stack, please `.push()` a box first.')
+            "No boxes found on the stack, please `.push()` a box first."
+        )
 
         with teststack_b.push(testbox_b):
-            with pytest.raises(KeyError, match='the-pin'):
-                teststack_a.get('the-pin')
-            assert teststack_b.get('the-pin') == 12
+            with pytest.raises(KeyError, match="the-pin"):
+                teststack_a.get("the-pin")
+            assert teststack_b.get("the-pin") == 12
 
 
 def test_push_pop_as_regular_functions(teststack):
-    @teststack.pass_('magic')
+    @teststack.pass_("magic")
     def do(magic):
         return magic + 1
 
     foobox = picobox.Box()
-    foobox.put('magic', 42)
+    foobox.put("magic", 42)
 
     barbox = picobox.Box()
-    barbox.put('magic', 13)
+    barbox.put("magic", 13)
 
     teststack.push(foobox)
     assert do() == 43
