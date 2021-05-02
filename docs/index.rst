@@ -344,6 +344,9 @@ Release Notes
 * Drop ``Python 3.4`` and ``Python 3.5`` support. Everyone is advised to move
   on to ``Python 3.6`` at least.
 
+* Add type annotations to public interface. Now users can use ``mypy`` to
+  leverage type checking in their code base.
+
 2.2.0
 `````
 
