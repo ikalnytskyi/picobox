@@ -12,12 +12,12 @@ from . import _scopes
 # missing when "None" is a valid input. It's important to define a human
 # readable "__repr__" because its value is used in function signatures in
 # API reference (see docs).
-class _missing:
+class _unset:
     def __repr__(self):
-        return "<optional>"
+        return "<unset>"
 
 
-_missing = _missing()
+_unset = _unset()
 
 
 class Box:
@@ -55,9 +55,9 @@ class Box:
     def put(
         self,
         key: t.Hashable,
-        value: t.Any = _missing,
-        factory: t.Callable[[], t.Any] = _missing,
-        scope: t.Type[_scopes.Scope] = _missing,
+        value: t.Any = _unset,
+        factory: t.Callable[[], t.Any] = _unset,
+        scope: t.Type[_scopes.Scope] = _unset,
     ) -> None:
         """Define a dependency (aka service) within the box instance.
 
@@ -78,7 +78,7 @@ class Box:
             a class that implements :class:`Scope` interface.
         :raises ValueError: If both `value` and `factory` are passed.
         """
-        if value is not _missing and (factory is not _missing or scope is not _missing):
+        if value is not _unset and (factory is not _unset or scope is not _unset):
             raise ValueError("either 'value' or 'factory'/'scope' pair must be passed")
 
         # Value is a syntax sugar Box supports to store objects "As Is"
@@ -87,7 +87,7 @@ class Box:
         # have just one factory argument and check it for callable, but
         # in this case it wouldn't support values which are callable by
         # its nature.
-        if value is not _missing:
+        if value is not _unset:
 
             def factory():
                 return value
@@ -97,7 +97,7 @@ class Box:
         # If scope is not explicitly passed, Box assumes "No Scope"
         # scope which means each time someone asks a box to retrieve a
         # value it would use a factory function.
-        elif scope is _missing:
+        elif scope is _unset:
             scope = _scopes.noscope
 
         # Convert a given scope class into a scope instance. Since key
@@ -116,7 +116,7 @@ class Box:
         with self._lock:
             self._store[key] = (scope, factory)
 
-    def get(self, key: t.Hashable, default: t.Any = _missing) -> t.Any:
+    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
         """Retrieve a dependency (aka service) out of the box instance.
 
         The process involves creation of requested dependency by calling an
@@ -136,7 +136,7 @@ class Box:
         try:
             scope, factory = self._store[key]
         except KeyError:
-            if default is _missing:
+            if default is _unset:
                 raise
             return default
 
@@ -156,7 +156,7 @@ class Box:
 
         return value
 
-    def pass_(self, key: t.Hashable, as_: t.Text = _missing):
+    def pass_(self, key: t.Hashable, as_: t.Text = _unset):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -185,7 +185,7 @@ class Box:
                 arguments = signature.bind_partial(*args, **kwargs)
 
                 for key, as_ in wrapper.__dependencies__:
-                    if as_ is _missing:
+                    if as_ is _unset:
                         as_ = key
 
                     # One of picobox core principles is to supply dependencies
@@ -241,14 +241,14 @@ class ChainBox(Box):
     def put(
         self,
         key: t.Hashable,
-        value: t.Any = _missing,
-        factory: t.Callable[[], t.Any] = _missing,
-        scope: t.Type[_scopes.Scope] = _missing,
+        value: t.Any = _unset,
+        factory: t.Callable[[], t.Any] = _unset,
+        scope: t.Type[_scopes.Scope] = _unset,
     ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
         return self._boxes[0].put(key, value, factory, scope)
 
-    def get(self, key: t.Hashable, default: t.Any = _missing) -> t.Any:
+    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
         """Same as :meth:`Box.get` but looks up for key in underlying boxes."""
         for box in self._boxes:
             try:
@@ -256,6 +256,6 @@ class ChainBox(Box):
             except KeyError:
                 pass
 
-        if default is _missing:
+        if default is _unset:
             raise KeyError(key)
         return default
