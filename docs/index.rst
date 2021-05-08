@@ -347,6 +347,9 @@ Release Notes
 * Add type annotations to public interface. Now users can use ``mypy`` to
   leverage type checking in their code base.
 
+* Make some parameters keyword-only: ``factory`` and ``scope`` in ``Box.put()``,
+  ``as_`` in ``Box.pass_()`` and ``chain`` in ``picobox.push()``.
+
 2.2.0
 `````
 

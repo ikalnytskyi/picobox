@@ -113,7 +113,7 @@ class Stack:
             name = "0x%x" % id(self)
         return "<Stack (%s)>" % name
 
-    def push(self, box: Box, chain: bool = False):
+    def push(self, box: Box, *, chain: bool = False):
         """Push a :class:`Box` instance to the top of the stack.
 
         Returns a context manager, that will automatically pop the box from the
