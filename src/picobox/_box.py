@@ -3,6 +3,7 @@
 import functools
 import inspect
 import threading
+import typing as t
 
 from . import _scopes
 
@@ -19,7 +20,7 @@ class _missing:
 _missing = _missing()
 
 
-class Box(object):
+class Box:
     """Box is a dependency injection (DI) container.
 
     DI container is an object that contains any amount of factories, one for
@@ -51,7 +52,13 @@ class Box(object):
         self._scope_instances = {}
         self._lock = threading.RLock()
 
-    def put(self, key, value=_missing, factory=_missing, scope=_missing):
+    def put(
+        self,
+        key: t.Hashable,
+        value: t.Any = _missing,
+        factory: t.Callable[[], t.Any] = _missing,
+        scope: t.Type[_scopes.Scope] = _missing,
+    ) -> None:
         """Define a dependency (aka service) within the box instance.
 
         A dependency can be expressed either directly, by passing a concrete
@@ -109,7 +116,7 @@ class Box(object):
         with self._lock:
             self._store[key] = (scope, factory)
 
-    def get(self, key, default=_missing):
+    def get(self, key: t.Hashable, default: t.Any = _missing) -> t.Any:
         """Retrieve a dependency (aka service) out of the box instance.
 
         The process involves creation of requested dependency by calling an
@@ -149,7 +156,7 @@ class Box(object):
 
         return value
 
-    def pass_(self, key, as_=_missing):
+    def pass_(self, key: t.Hashable, as_: t.Text = _missing):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -228,14 +235,20 @@ class ChainBox(Box):
     .. versionadded:: 1.1
     """
 
-    def __init__(self, *boxes):
-        self._boxes = boxes or [Box()]
+    def __init__(self, *boxes: Box):
+        self._boxes = boxes or (Box(),)
 
-    def put(self, key, value=_missing, factory=_missing, scope=_missing):
+    def put(
+        self,
+        key: t.Hashable,
+        value: t.Any = _missing,
+        factory: t.Callable[[], t.Any] = _missing,
+        scope: t.Type[_scopes.Scope] = _missing,
+    ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
         return self._boxes[0].put(key, value, factory, scope)
 
-    def get(self, key, default=_missing):
+    def get(self, key: t.Hashable, default: t.Any = _missing) -> t.Any:
         """Same as :meth:`Box.get` but looks up for key in underlying boxes."""
         for box in self._boxes:
             try:

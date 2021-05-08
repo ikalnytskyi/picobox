@@ -29,9 +29,10 @@ Features
 * Support scopes (e.g. singleton, threadlocal, contextvars).
 * Push boxes on stack, and use the top one to access values.
 * Thread-safe.
-* Lightweight (~450 LOC including scopes).
-* Zero dependencies (on python3).
+* Lightweight (~500 LOC including scopes).
+* Zero dependencies.
 * Pure Python.
+* Annotated with types.
 
 
 

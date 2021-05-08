@@ -1,8 +1,9 @@
 """Picobox API to work with a box at the top of the stack."""
 
-import threading
-import functools
 import contextlib
+import functools
+import threading
+import typing as t
 
 from ._box import Box, ChainBox
 
@@ -48,7 +49,7 @@ def _create_push_context_manager(box, pop_callback):
         assert pop_callback() is box
 
 
-class Stack(object):
+class Stack:
     """Stack is a dependency injection (DI) container for containers (boxes).
 
     While :class:`Box` is a great way to manage dependencies, it has no means
@@ -92,7 +93,7 @@ class Stack(object):
     .. versionadded:: 2.2
     """
 
-    def __init__(self, name=None):
+    def __init__(self, name: t.Text = None):
         self._name = name
         self._stack = []
         self._lock = threading.Lock()
@@ -112,7 +113,7 @@ class Stack(object):
             name = "0x%x" % id(self)
         return "<Stack (%s)>" % name
 
-    def push(self, box, chain=False):
+    def push(self, box: Box, chain: bool = False):
         """Push a :class:`Box` instance to the top of the stack.
 
         Returns a context manager, that will automatically pop the box from the
@@ -135,7 +136,7 @@ class Stack(object):
             self._stack.append(box)
         return _create_push_context_manager(self._stack[-1], self._stack.pop)
 
-    def pop(self):
+    def pop(self) -> Box:
         """Pop the box from the top of the stack.
 
         Should be called once for every corresponding call to :meth:`.push` in

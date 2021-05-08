@@ -2,6 +2,7 @@
 
 import abc
 import threading
+import typing as t
 
 try:
     import contextvars as _contextvars
@@ -25,11 +26,11 @@ class Scope(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         """Bind `value` to `key` in current execution context."""
 
     @abc.abstractmethod
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         """Get `value` by `key` for current execution context."""
 
 
@@ -39,10 +40,10 @@ class singleton(Scope):
     def __init__(self):
         self._store = {}
 
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         self._store[key] = value
 
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         return self._store[key]
 
 
@@ -52,14 +53,14 @@ class threadlocal(Scope):
     def __init__(self):
         self._local = threading.local()
 
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         try:
             store = self._local.store
         except AttributeError:
             store = self._local.store = {}
         store[key] = value
 
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         try:
             rv = self._local.store[key]
         except AttributeError:
@@ -82,14 +83,14 @@ class contextvars(Scope):
     def __init__(self):
         self._store = {}
 
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         try:
             var = self._store[key]
         except KeyError:
             var = self._store[key] = _contextvars.ContextVar("picobox")
         var.set(value)
 
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         try:
             return self._store[key].get()
         except LookupError:
@@ -99,10 +100,10 @@ class contextvars(Scope):
 class noscope(Scope):
     """Do not share instances, create them each time on demand."""
 
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         pass
 
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         raise KeyError(key)
 
 
