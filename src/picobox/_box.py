@@ -56,6 +56,7 @@ class Box:
         self,
         key: t.Hashable,
         value: t.Any = _unset,
+        *,
         factory: t.Callable[[], t.Any] = _unset,
         scope: t.Type[_scopes.Scope] = _unset,
     ) -> None:
@@ -156,7 +157,7 @@ class Box:
 
         return value
 
-    def pass_(self, key: t.Hashable, as_: t.Text = _unset):
+    def pass_(self, key: t.Hashable, *, as_: t.Text = _unset):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -242,11 +243,12 @@ class ChainBox(Box):
         self,
         key: t.Hashable,
         value: t.Any = _unset,
+        *,
         factory: t.Callable[[], t.Any] = _unset,
         scope: t.Type[_scopes.Scope] = _unset,
     ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
-        return self._boxes[0].put(key, value, factory, scope)
+        return self._boxes[0].put(key, value, factory=factory, scope=scope)
 
     def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
         """Same as :meth:`Box.get` but looks up for key in underlying boxes."""
