@@ -23,6 +23,7 @@ One of the most easiest examples is to say that DI is essentially about writing
     def do_something(my_service):
         return my_service.get_val() + 42
 
+
     my_service = MyService(foo, bar)
     do_something(my_service)
 
@@ -33,6 +34,7 @@ instead of
     def do_something():
         my_service = MyService(foo, bar)
         return my_service.get_val() + 42
+
 
     do_something()
 
@@ -59,20 +61,22 @@ to deal with. You can put, you can get, you can pass them around.
     import picobox
 
     box = picobox.Box()
-    box.put('foo', 42)
+    box.put("foo", 42)
 
-    @box.pass_('foo')
+
+    @box.pass_("foo")
     def spam(foo):
         return foo
 
-    @box.pass_('foo', as_='bar')
+
+    @box.pass_("foo", as_="bar")
     def eggs(bar):
         return bar
 
-    print(box.get('foo'))   # 42
 
-    print(spam())           # 42
-    print(eggs())           # 42
+    print(box.get("foo"))   # ==> 42
+    print(spam())           # ==> 42
+    print(eggs())           # ==> 42
 
 One of the key principles is `not to break` existing code. That's why Picobox
 does not change function signature and injects dependencies as if they are
@@ -80,9 +84,9 @@ defaults.
 
 .. code:: python
 
-    print(spam())           # 42
-    print(spam(13))         # 13
-    print(spam(foo=99))     # 99
+    print(spam())           # ==> 42
+    print(spam(13))         # ==> 13
+    print(spam(foo=99))     # ==> 99
 
 Another key principle is that ``pass_()`` resolves dependencies lazily which
 means you can inject them everywhere you need and define them much later. The
@@ -94,16 +98,18 @@ only rule is to define them before calling the function.
 
     box = picobox.Box()
 
-    @box.pass_('foo')
+
+    @box.pass_("foo")
     def spam(foo):
         return foo
 
-    print(spam(13))         # 13
-    print(spam())           # KeyError: 'foo'
 
-    box.put('foo', 42)
+    print(spam(13))         # ==> 13
+    print(spam())           # ==> KeyError: 'foo'
 
-    print(spam())           # 42
+    box.put("foo", 42)
+
+    print(spam())           # ==> 42
 
 The value to inject is not necessarily an object. You can pass a factory
 function which will be used to produce a dependency. A factory function has
@@ -115,17 +121,19 @@ no arguments, and is assumed to have all the context it needs to work.
     import random
 
     box = picobox.Box()
-    box.put('foo', factory=lambda: random.choice(['spam', 'eggs']))
+    box.put("foo", factory=lambda: random.choice(["spam", "eggs"]))
 
-    @box.pass_('foo')
-    def spam(foo):
+
+    @box.pass_("foo")
+    def get_foo(foo):
         return foo
 
-    print(spam())           # spam
-    print(spam())           # eggs
-    print(spam())           # eggs
-    print(spam())           # spam
-    print(spam())           # eggs
+
+    print(get_foo())        # ==> spam
+    print(get_foo())        # ==> eggs
+    print(get_foo())        # ==> eggs
+    print(get_foo())        # ==> spam
+    print(get_foo())        # ==> eggs
 
 Whereas factories are enough to implement whatever creation policy you want,
 there's no good in repeating yourself again and again. That's why Picobox
@@ -142,16 +150,19 @@ instance per thread (threadlocal).
     import threading
 
     box = picobox.Box()
-    box.put('foo', factory=random.random, scope=picobox.threadlocal)
-    box.put('bar', factory=random.random, scope=picobox.singleton)
+    box.put("foo", factory=random.random, scope=picobox.threadlocal)
+    box.put("bar", factory=random.random, scope=picobox.singleton)
 
-    @box.pass_('foo')
+
+    @box.pass_("foo")
     def spam(foo):
         print(foo)
 
-    @box.pass_('bar')
+
+    @box.pass_("bar")
     def eggs(bar):
         print(bar)
+
 
     # prints
     # > 0.9464005851114538
@@ -175,25 +186,27 @@ general methods that will be applied to latest active box instance.
 
     import picobox
 
-    @picobox.pass_('foo')
+
+    @picobox.pass_("foo")
     def spam(foo):
         return foo
 
+
     box_a = picobox.Box()
-    box_a.put('foo', 13)
+    box_a.put("foo", 13)
 
     box_b = picobox.Box()
-    box_b.put('foo', 42)
+    box_b.put("foo", 42)
 
     with picobox.push(box_a):
-        print(spam())               # 13
+        print(spam())               # ==> 13
 
         with picobox.push(box_b):
-            print(spam())           # 42
+            print(spam())           # ==> 42
 
-        print(spam())               # 13
+        print(spam())               # ==> 13
 
-    spam()                          # RuntimeError: no boxes on the stack
+    spam()                          # ==> RuntimeError: no boxes on the stack
 
 When only partial overriding is necessary, you can chain pushed box so any
 missed lookups will be proxied to the box one level down the stack.
@@ -202,21 +215,23 @@ missed lookups will be proxied to the box one level down the stack.
 
     import picobox
 
-    @picobox.pass_('foo')
-    @picobox.pass_('bar')
+
+    @picobox.pass_("foo")
+    @picobox.pass_("bar")
     def spam(foo, bar):
         return foo + bar
 
+
     box_a = picobox.Box()
-    box_a.put('foo', 13)
-    box_a.put('bar', 42)
+    box_a.put("foo", 13)
+    box_a.put("bar", 42)
 
     box_b = picobox.Box()
-    box_b.put('bar', 0)
+    box_b.put("bar", 0)
 
     with picobox.push(box_a):
         with picobox.push(box_b, chain=True):
-            print(spam())           # 13
+            print(spam())           # ==> 13
 
 The stack interface is recommended way to use Picobox because it allows to
 switch between DI containers (boxes) on the fly. This is also the only way to
@@ -227,7 +242,7 @@ not a solution.
 
     def test_spam():
         with picobox.push(picobox.Box(), chain=True) as box:
-            box.put('foo', 42)
+            box.put("foo", 42)
             assert spam() == 42
 
 ``picobox.push()`` can also be used as a regular function, not only as a
@@ -237,7 +252,7 @@ context manager.
 
     def test_spam():
         box = picobox.push(picobox.Box(), chain=True)
-        box.put('foo', 42)
+        box.put("foo", 42)
         assert spam() == 42
         picobox.pop()
 
@@ -261,12 +276,14 @@ are done with it.
 
         stack = picobox.Stack()
 
-        @stack.pass_('a', as_='b')
+
+        @stack.pass_("a", as_="b")
         def mysum(a, b):
             return a + b
 
+
         with stack.push(picobox.Box()) as box:
-            box.put('a', 42)
+            box.put("a", 42)
             assert mysum(13) == 55
 
 

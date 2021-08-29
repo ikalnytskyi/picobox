@@ -1,7 +1,7 @@
 """Setup pytest environment."""
 
-import pytest
 import picobox
+import pytest
 
 
 @pytest.fixture(

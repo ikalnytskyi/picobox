@@ -2,8 +2,8 @@
 
 import threading
 
-import pytest
 import picobox
+import pytest
 
 
 @pytest.fixture(scope="function")
