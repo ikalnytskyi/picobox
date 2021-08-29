@@ -5,8 +5,8 @@ import inspect
 import itertools
 import traceback
 
-import pytest
 import picobox
+import pytest
 
 
 def test_box_put_key(boxclass, supported_key):

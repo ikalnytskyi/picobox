@@ -3,8 +3,8 @@
 import itertools
 import traceback
 
-import pytest
 import picobox
+import pytest
 
 
 @pytest.fixture(params=[picobox.Stack(), picobox])

@@ -1,8 +1,8 @@
 """Dependency injection framework designed with Python in mind."""
 
 from ._box import Box, ChainBox
-from ._scopes import Scope, singleton, threadlocal, noscope
-from ._stack import Stack, push, pop, put, get, pass_
+from ._scopes import Scope, noscope, singleton, threadlocal
+from ._stack import Stack, get, pass_, pop, push, put
 
 try:
     from ._scopes import contextvars

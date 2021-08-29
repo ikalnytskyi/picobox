@@ -26,7 +26,7 @@ def _copy_signature(method, instance=None):
 def _create_stack_proxy(stack, empty_stack_error):
     """Create an object that proxies all calls to the top of the stack."""
 
-    class _StackProxy(object):
+    class _StackProxy:
         def __getattribute__(self, name):
             try:
                 return getattr(stack[-1], name)
