@@ -360,8 +360,8 @@ Release Notes
 * Drop ``Python 2.7`` support. It's dead for more than a year anyway. Those who
   want to use picobox with ``Python 2`` should stick with ``2.x`` branch.
 
-* Drop ``Python 3.4`` and ``Python 3.5`` support. Everyone is advised to move
-  on to ``Python 3.6`` at least.
+* Drop ``Python 3.4``, ``Python 3.5`` and ``Python 3.6`` support. They reached
+  their end-of-life and are not maintained anymore.
 
 * Add type annotations to public interface. Now users can use ``mypy`` to
   leverage type checking in their code base.
