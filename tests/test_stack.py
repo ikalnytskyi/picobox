@@ -1,6 +1,7 @@
 """Test picobox's stack interface."""
 
 import itertools
+import sys
 import traceback
 
 import picobox
@@ -472,7 +473,11 @@ def test_box_pass_unexpected_argument(boxclass, teststack):
         with pytest.raises(TypeError) as excinfo:
             fn(1, 2)
 
-    assert str(excinfo.value) == "fn() got an unexpected keyword argument 'd'"
+    expected = "fn() got an unexpected keyword argument 'd'"
+    if sys.version_info >= (3, 10):
+        expected = f"test_box_pass_unexpected_argument.<locals>.{expected}"
+
+    assert str(excinfo.value) == expected
 
 
 def test_box_pass_keyerror(boxclass, teststack):
