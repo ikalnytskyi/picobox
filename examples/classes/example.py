@@ -7,7 +7,6 @@ class Sender:
 
 
 class Controller:
-
     # Picobox supports injections by type (key may be any hashable object),
     # though in this case you have to explicitly map the key onto argument
     # name.
