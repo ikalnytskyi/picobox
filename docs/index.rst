@@ -355,7 +355,7 @@ Release Notes
 
 (unreleased)
 
-* Add ``Python 3.10`` support.
+* Add ``Python 3.10`` & `Python 3.11` support.
 
 * Drop ``Python 2.7`` support. It's dead for more than a year anyway. Those who
   want to use picobox with ``Python 2`` should stick with ``2.x`` branch.

@@ -54,13 +54,19 @@ def exec_thread():
 @pytest.fixture(scope="function")
 def exec_coroutine(request):
     """Run a given coroutine function in a separate event loop."""
+
     asyncio = pytest.importorskip("asyncio")
     loop = asyncio.new_event_loop()
     request.addfinalizer(loop.close)
 
-    def executor(coroutine_function, *args, **kwargs):
-        if not asyncio.iscoroutinefunction(coroutine_function):
-            coroutine_function = asyncio.coroutine(coroutine_function)
+    def executor(function, *args, **kwargs):
+        if not asyncio.iscoroutinefunction(function):
+
+            async def coroutine_function(*args, **kwargs):
+                return function(*args, **kwargs)
+
+        else:
+            coroutine_function = function
         return loop.run_until_complete(coroutine_function(*args, **kwargs))
 
     return executor
