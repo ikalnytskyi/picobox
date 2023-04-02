@@ -355,7 +355,7 @@ Release Notes
 
 (unreleased)
 
-* Add ``Python 3.10`` support.
+* Add ``Python 3.10`` & `Python 3.11` support.
 
 * Drop ``Python 2.7`` support. It's dead for more than a year anyway. Those who
   want to use picobox with ``Python 2`` should stick with ``2.x`` branch.
@@ -369,6 +369,8 @@ Release Notes
 * Make some parameters keyword-only: ``factory`` and ``scope`` in ``Box.put()``,
   ``as_`` in ``Box.pass_()`` and ``chain`` in ``picobox.push()``.
 
+* Use `PEP 621 <https://peps.python.org/pep-0621/>`_ ``pyproject.toml`` in
+  a so-called source distribution.
 
 2.2.0
 `````

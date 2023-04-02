@@ -10,61 +10,46 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
-
-      - name: Setup dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
       - name: Run lints
-        run: |
-          python -m tox -e pre-commit
+        run: pipx run -- hatch run lint:run
 
   test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.8"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.8"]
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Pull OpenAPI specs for tests
-      run: |
-        git submodule update --init --recursive
-
-    - name: Setup dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
-
-    - name: Run pytest
-      run: |
-        python -m tox -e py
+      - name: Run pytest
+        run: pipx run -- hatch run test:run
 
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
-
-      - name: Setup dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
       - name: Run sphinx
-        run: |
-          python -m tox -e docs
+        run: pipx run -- hatch run docs:run

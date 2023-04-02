@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "picobox"
+description = "Dependency injection framework designed with Python in mind."
+readme = "README.rst"
+requires-python = ">=3.7"
+license = "MIT"
+authors = [
+  { name = "Ihor Kalnytskyi", email = "ihor@kalnytskyi.com" },
+]
+classifiers = [
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Software Development :: Libraries",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://picobox.readthedocs.io"
+Source = "https://github.com/ikalnytskyi/picobox"
+Bugs = "https://github.com/ikalnytskyi/picobox/issues"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.envs.test]
+dependencies = ["pytest", "flask"]
+scripts.run = "python -m pytest --strict {args:-vv}"
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = ["pre-commit"]
+scripts.run = "python -m pre_commit run --all-files --show-diff-on-failure"
+
+[tool.hatch.envs.docs]
+dependencies = ["sphinx", "sphinx_rtd_theme"]
+scripts.run = "sphinx-build -W -b html docs docs/_build/"
