@@ -21,7 +21,7 @@ jobs:
 
       - name: Prepare artifacts
         run: |
-          python setup.py sdist
+          pipx run -- hatch build
 
       - name: Publish to PyPI
         env:

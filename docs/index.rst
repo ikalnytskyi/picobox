@@ -369,6 +369,8 @@ Release Notes
 * Make some parameters keyword-only: ``factory`` and ``scope`` in ``Box.put()``,
   ``as_`` in ``Box.pass_()`` and ``chain`` in ``picobox.push()``.
 
+* Use `PEP 621 <https://peps.python.org/pep-0621/>`_ ``pyproject.toml`` in
+  a so-called source distribution.
 
 2.2.0
 `````
