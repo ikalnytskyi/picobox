@@ -93,7 +93,7 @@ class Stack:
     .. versionadded:: 2.2
     """
 
-    def __init__(self, name: t.Text = None):
+    def __init__(self, name: t.Optional[t.Text] = None):
         self._name = name
         self._stack = []
         self._lock = threading.Lock()
@@ -113,7 +113,7 @@ class Stack:
             name = "0x%x" % id(self)
         return "<Stack (%s)>" % name
 
-    def push(self, box: Box, *, chain: bool = False):
+    def push(self, box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
         """Push a :class:`Box` instance to the top of the stack.
 
         Returns a context manager, that will automatically pop the box from the
@@ -172,12 +172,7 @@ class Stack:
     @_copy_signature(Box.pass_)
     def pass_(self, *args, **kwargs):
         """The same as :meth:`Box.pass_` but for a box at the top."""
-        # Box.pass_(topbox, *args, **kwargs) does not work in Python 2 because
-        # Box.pass_ is an unbound method, and unbound methods require a class
-        # instance as its first argument. Therefore, we need a workaround to
-        # extract a function without "method" wrapping, so we can pass anything
-        # as the first argument.
-        return vars(Box)["pass_"](self._topbox, *args, **kwargs)
+        return Box.pass_(self._topbox, *args, **kwargs)
 
 
 _instance = Stack("shared")
