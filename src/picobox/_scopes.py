@@ -75,7 +75,7 @@ class contextvars(Scope):
     in asynchronous applications to share dependencies between coroutines of
     the same :class:`asyncio.Task`.
 
-    .. __: https://docs.python.org/3.7/library/contextvars.html#asyncio-support
+    .. __: https://docs.python.org/3/library/contextvars.html#asyncio-support
 
     .. versionadded:: 2.1
     """

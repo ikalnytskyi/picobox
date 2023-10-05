@@ -350,6 +350,13 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
+3.1.0
+`````
+
+(unreleased)
+
+* Drop ``Python 3.7`` support. It reached its end-of-life recently.
+
 3.0.0
 `````
 
