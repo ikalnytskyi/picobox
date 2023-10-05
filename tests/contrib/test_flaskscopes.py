@@ -2,6 +2,7 @@
 
 import flask
 import pytest
+
 from picobox.contrib import flaskscopes
 
 

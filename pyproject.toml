@@ -42,9 +42,22 @@ scripts.run = "python -m pytest --strict {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
-dependencies = ["pre-commit"]
-scripts.run = "python -m pre_commit run --all-files --show-diff-on-failure"
+dependencies = [
+  "black >= 23.9.1",
+  "ruff == 0.0.292",
+]
+scripts.run = ["ruff {args:.}", "black --check --diff {args:.}"]
 
 [tool.hatch.envs.docs]
 dependencies = ["sphinx", "sphinx_rtd_theme"]
 scripts.run = "sphinx-build -W -b html docs docs/_build/"
+
+[tool.ruff]
+select = ["F", "E", "W", "I", "S", "FBT", "B", "C4", "DTZ", "T10", "ISC", "RET", "SLF", "RUF"]
+ignore = ["S101", "B904"]
+
+[tool.ruff.isort]
+known-first-party = ["picobox"]
+
+[tool.ruff.per-file-ignores]
+"examples/*" = ["I"]
