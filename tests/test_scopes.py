@@ -2,8 +2,9 @@
 
 import threading
 
-import picobox
 import pytest
+
+import picobox
 
 
 @pytest.fixture(scope="function")
@@ -94,7 +95,7 @@ def test_scope_contextvars_attribute_error(monkeypatch):
         pass
 
     with pytest.raises(AttributeError, match="has no attribute 'contextvars'"):
-        picobox.contextvars
+        _ = picobox.contextvars
 
 
 @pytest.mark.parametrize(

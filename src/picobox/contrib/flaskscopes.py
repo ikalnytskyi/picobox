@@ -2,8 +2,9 @@
 
 import uuid
 
-import picobox
 import flask
+
+import picobox
 
 
 class _flaskscope(picobox.Scope):
