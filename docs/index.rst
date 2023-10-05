@@ -359,6 +359,13 @@ Release Notes
 
 * Drop ``Python 3.7`` support. It reached its end-of-life recently.
 
+* Fix ``@picobox.pass_()`` decorator issue when it was shadowing a return type
+  of the wrapped function breaking code completion in some LSP servers.
+
+* Fix ``picobox.push()`` context manager issue when it wasn't announcing
+  properly its return type breaking code completion in some LSP servers for the
+  returned object.
+
 3.0.0
 `````
 
