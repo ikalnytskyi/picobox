@@ -355,6 +355,8 @@ Release Notes
 
 (unreleased)
 
+* Add ``Python 3.12`` support.
+
 * Drop ``Python 3.7`` support. It reached its end-of-life recently.
 
 3.0.0

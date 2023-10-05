@@ -1,11 +1,11 @@
 import os
-import pkg_resources
+import importlib.metadata
 
 
 # -- Project settings
 project = "Picobox"
 copyright = "2017, Ihor Kalnytskyi"
-release = pkg_resources.get_distribution("picobox").version
+release = importlib.metadata.version("picobox")
 version = ".".join(release.split(".")[:2])
 
 # -- General settings
