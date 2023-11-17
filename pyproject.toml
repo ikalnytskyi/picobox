@@ -8,9 +8,7 @@ description = "Dependency injection framework designed with Python in mind."
 readme = "README.rst"
 requires-python = ">=3.8"
 license = "MIT"
-authors = [
-  { name = "Ihor Kalnytskyi", email = "ihor@kalnytskyi.com" },
-]
+authors = [{ name = "Ihor Kalnytskyi", email = "ihor@kalnytskyi.com" }]
 classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
@@ -50,7 +48,22 @@ dependencies = ["sphinx", "sphinx_rtd_theme"]
 scripts.run = "sphinx-build -W -b html docs docs/_build/"
 
 [tool.ruff]
-select = ["F", "E", "W", "I", "S", "FBT", "B", "C4", "DTZ", "T10", "ISC", "RET", "SLF", "RUF"]
+select = [
+  "F",
+  "E",
+  "W",
+  "I",
+  "S",
+  "FBT",
+  "B",
+  "C4",
+  "DTZ",
+  "T10",
+  "ISC",
+  "RET",
+  "SLF",
+  "RUF",
+]
 ignore = ["S101", "B904", "ISC001"]
 
 [tool.ruff.isort]
