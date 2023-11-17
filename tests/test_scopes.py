@@ -8,27 +8,27 @@ import pytest
 import picobox
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def singleton():
     return picobox.singleton()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def threadlocal():
     return picobox.threadlocal()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def contextvars():
     return picobox.contextvars()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def noscope():
     return picobox.noscope()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def exec_thread():
     """Run a given callback in a separate OS thread."""
 
@@ -52,13 +52,12 @@ def exec_thread():
     return executor
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def exec_coroutine(request):
     """Run a given coroutine function in a separate event loop."""
 
     asyncio = pytest.importorskip("asyncio")
     loop = asyncio.new_event_loop()
-    request.addfinalizer(loop.close)
 
     def executor(function, *args, **kwargs):
         if not asyncio.iscoroutinefunction(function):
@@ -70,10 +69,13 @@ def exec_coroutine(request):
             coroutine_function = function
         return loop.run_until_complete(coroutine_function(*args, **kwargs))
 
-    return executor
+    try:
+        yield executor
+    finally:
+        loop.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def exec_context():
     """Run a given callback in a separate context (PEP 567)."""
 
@@ -171,7 +173,7 @@ def test_scope_state_not_leaked(request, scopename):
 
 
 @pytest.mark.parametrize(
-    "scopename, executor",
+    ("scopename", "executor"),
     [
         ("singleton", "exec_thread"),
         ("singleton", "exec_coroutine"),
@@ -190,7 +192,7 @@ def test_scope_value_shared(request, scopename, executor):
 
 
 @pytest.mark.parametrize(
-    "scopename, executor",
+    ("scopename", "executor"),
     [
         ("threadlocal", "exec_thread"),
         ("contextvars", "exec_thread"),
@@ -213,7 +215,7 @@ def test_scope_value_not_shared(request, scopename, executor):
 
 
 @pytest.mark.parametrize(
-    "scopename, executor",
+    ("scopename", "executor"),
     [
         ("singleton", "exec_thread"),
         ("singleton", "exec_coroutine"),
@@ -242,7 +244,7 @@ def test_scope_value_downstack_shared(request, scopename, executor):
 
 
 @pytest.mark.parametrize(
-    "scopename, executor",
+    ("scopename", "executor"),
     [
         ("noscope", "exec_thread"),
         ("noscope", "exec_coroutine"),
@@ -266,7 +268,7 @@ def test_scope_value_downstack_not_shared(request, scopename, executor):
 
 
 @pytest.mark.parametrize(
-    "scopename, executor",
+    ("scopename", "executor"),
     [
         ("threadlocal", "exec_thread"),
         ("contextvars", "exec_thread"),
