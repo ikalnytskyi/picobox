@@ -1,13 +1,9 @@
 """Scope interface and builtin implementations."""
 
 import abc
+import contextvars as _contextvars
 import threading
 import typing as t
-
-try:
-    import contextvars as _contextvars
-except ImportError:
-    _contextvars = None
 
 
 class Scope(metaclass=abc.ABCMeta):
@@ -105,7 +101,3 @@ class noscope(Scope):
 
     def get(self, key: t.Hashable) -> t.Any:
         raise KeyError(key)
-
-
-if not _contextvars:
-    del contextvars
