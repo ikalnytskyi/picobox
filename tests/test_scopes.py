@@ -1,5 +1,6 @@
 """Test picobox's scopes implementations."""
 
+import contextvars as _contextvars
 import threading
 
 import pytest
@@ -19,7 +20,6 @@ def threadlocal():
 
 @pytest.fixture(scope="function")
 def contextvars():
-    pytest.importorskip("contextvars")
     return picobox.contextvars()
 
 
@@ -78,24 +78,10 @@ def exec_context():
     """Run a given callback in a separate context (PEP 567)."""
 
     def executor(callback, *args, **kwargs):
-        import contextvars
-
-        context = contextvars.copy_context()
+        context = _contextvars.copy_context()
         return context.run(callback, *args, **kwargs)
 
-    pytest.importorskip("contextvars")
     return executor
-
-
-def test_scope_contextvars_attribute_error(monkeypatch):
-    try:
-        __import__("contextvars")
-        pytest.skip("could import 'contextvars'")
-    except ImportError:
-        pass
-
-    with pytest.raises(AttributeError, match="has no attribute 'contextvars'"):
-        _ = picobox.contextvars
 
 
 @pytest.mark.parametrize(
