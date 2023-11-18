@@ -68,9 +68,10 @@ select = [
   "PT",
   "RET",
   "SLF",
+  "SIM",
   "RUF",
 ]
-ignore = ["D203", "D213", "D401", "S101", "B904", "ISC001", "PT011"]
+ignore = ["D203", "D213", "D401", "S101", "B904", "ISC001", "PT011", "SIM117"]
 
 [tool.ruff.isort]
 known-first-party = ["picobox"]
