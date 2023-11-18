@@ -36,7 +36,7 @@ source = "vcs"
 
 [tool.hatch.envs.test]
 dependencies = ["pytest", "flask"]
-scripts.run = "python -m pytest --strict {args:-vv}"
+scripts.run = "python -m pytest --strict-markers {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
