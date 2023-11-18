@@ -79,8 +79,14 @@ class Box:
             a class that implements :class:`Scope` interface.
         :raises ValueError: If both `value` and `factory` are passed.
         """
-        if value is not _unset and (factory is not _unset or scope is not _unset):
-            raise ValueError("either 'value' or 'factory'/'scope' pair must be passed")
+        if value is _unset and factory is _unset:
+            raise TypeError("Box.put() missing 1 required argument: either 'value' or 'factory'")
+
+        if value is not _unset and factory is not _unset:
+            raise TypeError("Box.put() takes either 'value' or 'factory', not both")
+
+        if value is not _unset and scope is not _unset:
+            raise TypeError("Box.put() takes 'scope' when 'factory' provided")
 
         # Value is a syntax sugar Box supports to store objects "As Is"
         # with singleton scope. In other words it's essentially the same

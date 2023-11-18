@@ -70,22 +70,36 @@ def test_box_put_factory_dependency(boxclass, teststack):
         assert teststack.get("b") == 14
 
 
+def test_box_put_value_factory_required(boxclass, teststack):
+    testbox = boxclass()
+
+    with teststack.push(testbox):
+        with pytest.raises(TypeError) as excinfo:
+            teststack.put("the-key")
+
+    assert str(excinfo.value) == (
+        "Box.put() missing 1 required argument: either 'value' or 'factory'"
+    )
+
+
 def test_box_put_value_and_factory(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(TypeError) as excinfo:
             teststack.put("the-key", 42, factory=object)
-    excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
+
+    assert str(excinfo.value) == "Box.put() takes either 'value' or 'factory', not both"
 
 
 def test_box_put_value_and_scope(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(TypeError) as excinfo:
             teststack.put("the-key", 42, scope=picobox.threadlocal)
-    excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
+
+    assert str(excinfo.value) == "Box.put() takes 'scope' when 'factory' provided"
 
 
 def test_box_put_runtimeerror(boxclass, teststack):

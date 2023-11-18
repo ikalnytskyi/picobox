@@ -96,27 +96,42 @@ def test_box_put_factory_dependency(boxclass):
     assert testbox.get("b") == 14
 
 
+def test_box_put_value_factory_required(boxclass):
+    testbox = boxclass()
+
+    with pytest.raises(TypeError) as excinfo:
+        testbox.put("the-key")
+
+    assert str(excinfo.value) == (
+        "Box.put() missing 1 required argument: either 'value' or 'factory'"
+    )
+
+
 def test_box_put_value_and_factory(boxclass):
     testbox = boxclass()
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
         testbox.put("the-key", 42, factory=object)
-    excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
+
+    assert str(excinfo.value) == "Box.put() takes either 'value' or 'factory', not both"
 
 
 def test_box_put_value_and_scope(boxclass):
     testbox = boxclass()
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
         testbox.put("the-key", 42, scope=picobox.threadlocal)
-    excinfo.match("either 'value' or 'factory'/'scope' pair must be passed")
+
+    assert str(excinfo.value) == "Box.put() takes 'scope' when 'factory' provided"
 
 
 def test_box_get_keyerror(boxclass):
     testbox = boxclass()
 
-    with pytest.raises(KeyError, match="the-key"):
+    with pytest.raises(KeyError) as excinfo:
         testbox.get("the-key")
+
+    assert str(excinfo.value) == "'the-key'"
 
 
 def test_box_get_default(boxclass):
@@ -421,7 +436,7 @@ def test_box_pass_keyerror(boxclass):
     with pytest.raises(KeyError) as excinfo:
         fn(1)
 
-    excinfo.match("b")
+    assert str(excinfo.value) == "'b'"
 
 
 def test_box_pass_optimization(boxclass, request):
