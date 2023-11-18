@@ -350,10 +350,14 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
-3.1.0
+4.0.0
 `````
 
 (unreleased)
+
+* **BREAKING**: Both ``key`` and ``value`` parameters of ``Box.put()`` are
+  positional-only now. They have been designed in mind as a positional-only
+  from Day 1, but unfortunately there was no way to enforce this.
 
 * Add ``Python 3.12`` support.
 
