@@ -92,9 +92,7 @@ def test_box_put_runtimeerror(boxclass, teststack):
     with pytest.raises(RuntimeError) as excinfo:
         teststack.put("the-key", object())
 
-    assert str(excinfo.value) == (
-        "No boxes found on the stack, please `.push()` a box first."
-    )
+    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
 
 def test_box_get_value(boxclass, teststack, supported_value):
@@ -179,9 +177,7 @@ def test_box_get_runtimeerror(teststack):
     with pytest.raises(RuntimeError) as excinfo:
         teststack.get("the-key")
 
-    assert str(excinfo.value) == (
-        "No boxes found on the stack, please `.push()` a box first."
-    )
+    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
 
 @pytest.mark.parametrize(
@@ -501,9 +497,7 @@ def test_box_pass_runtimeerror(teststack):
     with pytest.raises(RuntimeError) as excinfo:
         fn()
 
-    assert str(excinfo.value) == (
-        "No boxes found on the stack, please `.push()` a box first."
-    )
+    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
 
 def test_box_pass_optimization(boxclass, teststack, request):
@@ -599,9 +593,7 @@ def test_stack_isolated(boxclass):
     with teststack_a.push(testbox_a):
         with pytest.raises(RuntimeError) as excinfo:
             teststack_b.get("the-key")
-        assert str(excinfo.value) == (
-            "No boxes found on the stack, please `.push()` a box first."
-        )
+        assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
         with teststack_b.push(testbox_b):
             with pytest.raises(KeyError, match="the-pin"):
