@@ -8,9 +8,7 @@ description = "Dependency injection framework designed with Python in mind."
 readme = "README.rst"
 requires-python = ">=3.8"
 license = "MIT"
-authors = [
-  { name = "Ihor Kalnytskyi", email = "ihor@kalnytskyi.com" },
-]
+authors = [{ name = "Ihor Kalnytskyi", email = "ihor@kalnytskyi.com" }]
 classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
@@ -38,7 +36,7 @@ source = "vcs"
 
 [tool.hatch.envs.test]
 dependencies = ["pytest", "flask"]
-scripts.run = "python -m pytest --strict {args:-vv}"
+scripts.run = "python -m pytest --strict-markers {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
@@ -50,11 +48,36 @@ dependencies = ["sphinx", "sphinx_rtd_theme"]
 scripts.run = "sphinx-build -W -b html docs docs/_build/"
 
 [tool.ruff]
-select = ["F", "E", "W", "I", "S", "FBT", "B", "C4", "DTZ", "T10", "ISC", "RET", "SLF", "RUF"]
-ignore = ["S101", "B904", "ISC001"]
+select = [
+  "F",
+  "E",
+  "W",
+  "I",
+  "D",
+  "UP",
+  "S",
+  "FBT",
+  "B",
+  "C4",
+  "DTZ",
+  "T10",
+  "ISC",
+  "PIE",
+  "T20",
+  "PYI",
+  "PT",
+  "RET",
+  "SLF",
+  "SIM",
+  "TCH",
+  "ERA",
+  "RUF",
+]
+ignore = ["D203", "D213", "D401", "S101", "B904", "ISC001", "PT011", "SIM117"]
 
 [tool.ruff.isort]
 known-first-party = ["picobox"]
 
 [tool.ruff.per-file-ignores]
-"examples/*" = ["I"]
+"examples/*" = ["I", "D", "T20"]
+"tests/*" = ["D"]

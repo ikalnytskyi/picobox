@@ -157,7 +157,7 @@ class Box:
 
         return value
 
-    def pass_(self, key: t.Hashable, *, as_: t.Text = _unset):
+    def pass_(self, key: t.Hashable, *, as_: str = _unset):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require

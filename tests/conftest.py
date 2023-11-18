@@ -6,7 +6,6 @@ import picobox
 
 
 @pytest.fixture(
-    scope="function",
     params=[
         42,
         "42",
@@ -22,7 +21,6 @@ def hashable_value(request):
 
 
 @pytest.fixture(
-    scope="function",
     params=[
         42,
         "42",
@@ -41,16 +39,16 @@ def any_value(request):
     return request.param
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def supported_key(hashable_value):
     return hashable_value
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def supported_value(any_value):
     return any_value
 
 
 @pytest.fixture(params=[picobox.Box, picobox.ChainBox])
 def boxclass(request):
-    yield request.param
+    return request.param

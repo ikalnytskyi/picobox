@@ -6,33 +6,33 @@ import pytest
 from picobox.contrib import flaskscopes
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def appscope():
     return flaskscopes.application()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def reqscope():
     return flaskscopes.request()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def flaskapp():
     return flask.Flask("test")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def appcontext(flaskapp):
     return flaskapp.app_context
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def reqcontext(flaskapp):
     return flaskapp.test_request_context
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("appscope", "appcontext"),
         ("reqscope", "reqcontext"),
@@ -63,7 +63,7 @@ def test_scope_set_nocontext(request, scopename):
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("appscope", "appcontext"),
         ("reqscope", "reqcontext"),
@@ -83,7 +83,7 @@ def test_scope_set_value_overwrite(request, scopename, ctx):
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("appscope", "appcontext"),
         ("reqscope", "reqcontext"),
@@ -99,7 +99,7 @@ def test_scope_get_keyerror(request, scopename, ctx, supported_key):
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("appscope", "appcontext"),
         ("reqscope", "reqcontext"),
@@ -129,7 +129,7 @@ def test_scope_state_not_leaked(request, scopename, ctx):
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("appscope", "appcontext"),
     ],
@@ -147,7 +147,7 @@ def test_scope_value_shared(request, scopename, ctx):
 
 
 @pytest.mark.parametrize(
-    "scopename, ctx",
+    ("scopename", "ctx"),
     [
         ("reqscope", "reqcontext"),
     ],

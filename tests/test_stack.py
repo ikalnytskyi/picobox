@@ -11,7 +11,7 @@ import picobox
 
 @pytest.fixture(params=[picobox.Stack(), picobox])
 def teststack(request):
-    yield request.param
+    return request.param
 
 
 def test_box_put_key(boxclass, teststack, supported_key):
@@ -185,7 +185,7 @@ def test_box_get_runtimeerror(teststack):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -207,7 +207,7 @@ def test_box_pass_a(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -230,7 +230,7 @@ def test_box_pass_b(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -254,7 +254,7 @@ def test_box_pass_c(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -278,7 +278,7 @@ def test_box_pass_c_default(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -305,7 +305,7 @@ def test_box_pass_ab(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -335,7 +335,7 @@ def test_box_pass_bc(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -363,7 +363,7 @@ def test_box_pass_ac(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -396,7 +396,7 @@ def test_box_pass_abc(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1, 2, 3), {}, 6),
         ((1, 2), {"c": 3}, 6),
@@ -419,7 +419,7 @@ def test_box_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((1,), {}, 1),
         ((), {"x": 1}, 1),
@@ -440,7 +440,7 @@ def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, rv",
+    ("args", "kwargs", "rv"),
     [
         ((0,), {}, 41),
         ((), {"x": 0}, 41),

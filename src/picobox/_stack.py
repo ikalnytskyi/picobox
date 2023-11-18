@@ -93,7 +93,7 @@ class Stack:
     .. versionadded:: 2.2
     """
 
-    def __init__(self, name: t.Optional[t.Text] = None):
+    def __init__(self, name: t.Optional[str] = None):
         self._name = name
         self._stack = []
         self._lock = threading.Lock()
