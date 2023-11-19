@@ -44,7 +44,7 @@ dependencies = ["ruff == 0.1.6"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.docs]
-dependencies = ["sphinx", "sphinx_rtd_theme"]
+pre-install-commands = ["python -m pip install -r docs/requirements.txt"]
 scripts.run = "sphinx-build -W -b html docs docs/_build/"
 
 [tool.ruff]
