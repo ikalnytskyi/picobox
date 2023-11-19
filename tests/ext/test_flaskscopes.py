@@ -3,7 +3,7 @@
 import flask
 import pytest
 
-from picobox.contrib import flaskscopes
+from picobox.ext import flaskscopes
 
 
 @pytest.fixture()

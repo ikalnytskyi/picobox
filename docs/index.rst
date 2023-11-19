@@ -322,10 +322,10 @@ Scopes
 .. autodata:: noscope
     :annotation:
 
-.. autodata:: picobox.contrib.flaskscopes.application
+.. autodata:: picobox.ext.flaskscopes.application
     :annotation:
 
-.. autodata:: picobox.contrib.flaskscopes.request
+.. autodata:: picobox.ext.flaskscopes.request
     :annotation:
 
 Stacked API
@@ -350,10 +350,12 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
-3.1.0
+4.0.0
 `````
 
 (unreleased)
+
+* **BREAKING**: The ``picobox.contrib`` package is renamed into ``picobox.ext``.
 
 * Add ``Python 3.12`` support.
 
