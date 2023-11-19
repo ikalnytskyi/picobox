@@ -1,11 +1,21 @@
 Picobox
 =======
 
+.. image:: https://img.shields.io/pypi/l/picobox
+   :target: https://pypi.python.org/pypi/picobox
+   :alt: PyPI - License
+
 .. image:: https://img.shields.io/pypi/v/picobox.svg
    :target: https://pypi.python.org/pypi/picobox
+   :alt: PyPI - Version
 
-.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
-   :target: https://saythanks.io/to/ikalnytskyi
+.. image:: https://img.shields.io/pypi/pyversions/picobox
+   :target: https://pypi.python.org/pypi/picobox
+   :alt: PyPI - Python Versions
+
+.. image:: https://img.shields.io/pypi/dm/picobox
+   :target: https://pypi.python.org/pypi/picobox
+   :alt: PyPI - Downloads
 
 Picobox is opinionated dependency injection framework designed to be clean,
 pragmatic and with Python in mind. No complex graphs, no implicit injections,
