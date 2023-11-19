@@ -7,6 +7,14 @@ no type bindings, no XML configurations.
 
 .. __: https://en.wikipedia.org/wiki/Dependency_injection
 
+.. toctree::
+    :caption: Project
+    :hidden:
+
+    Source <https://github.com/ikalnytskyi/picobox>
+    Bugs <https://github.com/ikalnytskyi/picobox/issues>
+    PyPI <https://pypi.org/project/picobox/>
+
 
 Why?
 ----
