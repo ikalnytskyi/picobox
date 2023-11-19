@@ -366,6 +366,10 @@ Release Notes
   properly its return type breaking code completion in some LSP servers for the
   returned object.
 
+* Fix ``Box.put()`` and ``picobox.put()`` to require either ``value``
+  or ``factory`` argument. Previously, they could have been invoked with ``key``
+  argument only, which makes no sense and causes runtime issues later on.
+
 3.0.0
 `````
 
