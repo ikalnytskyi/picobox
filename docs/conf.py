@@ -1,4 +1,3 @@
-import os
 import importlib.metadata
 
 
@@ -23,12 +22,7 @@ autodoc_typehints = "none"
 html_use_index = False
 html_show_sourcelink = False
 html_logo = "_static/picobox.svg"
-
-if not os.environ.get("READTHEDOCS") == "True":
-    import sphinx_rtd_theme
-
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "sphinx_rtd_theme"
 
 # Sphinx does not support "code" directive preserving default (docutils)
 # behaviour. This means code won't be highlighted which is not good. In
