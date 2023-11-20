@@ -361,7 +361,7 @@ Release Notes
 4.0.0
 `````
 
-(unreleased)
+Released on Nov 20, 2023.
 
 * **BREAKING**: The ``picobox.contrib`` package is renamed into ``picobox.ext``.
 
