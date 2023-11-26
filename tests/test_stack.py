@@ -1,5 +1,6 @@
 """Test picobox's stack interface."""
 
+import inspect
 import itertools
 import sys
 import traceback
@@ -449,6 +450,28 @@ def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
         assert Foo(*args, **kwargs).x == rv
 
 
+@pytest.mark.asyncio()
+@pytest.mark.parametrize(
+    ("args", "kwargs", "rv"),
+    [
+        ((1,), {}, 1),
+        ((), {"x": 1}, 1),
+        ((), {}, 42),
+    ],
+)
+async def test_box_pass_coroutine(boxclass, teststack, args, kwargs, rv):
+    testbox = boxclass()
+    testbox.put("x", 42)
+
+    @teststack.pass_("x")
+    async def co(x):
+        return x
+
+    with teststack.push(testbox):
+        assert inspect.iscoroutinefunction(co)
+        assert await co(*args, **kwargs) == rv
+
+
 @pytest.mark.parametrize(
     ("args", "kwargs", "rv"),
     [
@@ -565,6 +588,29 @@ def test_box_pass_optimization_complex(boxclass, teststack, request):
 
     with teststack.push(testbox):
         assert len(fn()) == 3
+
+
+@pytest.mark.asyncio()
+async def test_box_pass_optimization_async(boxclass, teststack, request):
+    testbox = boxclass()
+    testbox.put("a", 1)
+    testbox.put("b", 1)
+    testbox.put("d", 1)
+
+    @teststack.pass_("a")
+    @teststack.pass_("b")
+    @teststack.pass_("d", as_="c")
+    async def fn(a, b, c):
+        backtrace = list(
+            itertools.dropwhile(
+                lambda frame: frame[2] != request.function.__name__,
+                traceback.extract_stack(),
+            )
+        )
+        return backtrace[1:-1]
+
+    with teststack.push(testbox):
+        assert len(await fn()) == 1
 
 
 def test_chainbox_put_changes_box(teststack):

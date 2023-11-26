@@ -386,6 +386,27 @@ def test_box_pass_method(args, kwargs, rv, boxclass):
     assert Foo(*args, **kwargs).x == rv
 
 
+@pytest.mark.asyncio()
+@pytest.mark.parametrize(
+    ("args", "kwargs", "rv"),
+    [
+        ((1,), {}, 1),
+        ((), {"x": 1}, 1),
+        ((), {}, 42),
+    ],
+)
+async def test_box_pass_coroutine(args, kwargs, rv, boxclass):
+    testbox = boxclass()
+    testbox.put("x", 42)
+
+    @testbox.pass_("x")
+    async def co(x):
+        return x
+
+    assert inspect.iscoroutinefunction(co)
+    assert await co(*args, **kwargs) == rv
+
+
 @pytest.mark.parametrize(
     ("args", "kwargs", "rv"),
     [
@@ -488,6 +509,28 @@ def test_box_pass_optimization_complex(boxclass, request):
         return backtrace[1:-1]
 
     assert len(fn()) == 3
+
+
+@pytest.mark.asyncio()
+async def test_box_pass_optimization_async(boxclass, request):
+    testbox = boxclass()
+    testbox.put("a", 1)
+    testbox.put("b", 1)
+    testbox.put("d", 1)
+
+    @testbox.pass_("a")
+    @testbox.pass_("b")
+    @testbox.pass_("d", as_="c")
+    async def fn(a, b, c):
+        backtrace = list(
+            itertools.dropwhile(
+                lambda frame: frame[2] != request.function.__name__,
+                traceback.extract_stack(),
+            )
+        )
+        return backtrace[1:-1]
+
+    assert len(await fn()) == 1
 
 
 def test_chainbox_put_changes_box():
