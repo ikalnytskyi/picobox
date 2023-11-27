@@ -358,6 +358,15 @@ Release Notes
     backward incompatible changes will be released along with bumping major
     version component.
 
+4.1.0
+`````
+
+(unreleased)
+
+* Fix a bug when a coroutine function wrapped with ``@picobox.pass_()``
+  lost its coroutine function marker, i.e. ``inspect.iscoroutinefunction()``
+  returned ``False``.
+
 4.0.0
 `````
 

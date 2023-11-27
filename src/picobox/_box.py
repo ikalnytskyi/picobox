@@ -187,7 +187,7 @@ class Box:
                 return fn
 
             @functools.wraps(fn)
-            def wrapper(*args, **kwargs):
+            def fn_with_dependencies(*args, **kwargs):
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
@@ -202,6 +202,14 @@ class Box:
                     if as_ not in arguments.arguments:
                         kwargs[as_] = self.get(key)
                 return fn(*args, **kwargs)
+
+            if inspect.iscoroutinefunction(fn):
+
+                @functools.wraps(fn)
+                async def wrapper(*args, **kwargs):
+                    return await fn_with_dependencies(*args, **kwargs)
+            else:
+                wrapper = fn_with_dependencies
 
             wrapper.__dependencies__ = [(key, as_)]
             return wrapper
