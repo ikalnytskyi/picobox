@@ -1,5 +1,6 @@
 """Test picobox's stack interface."""
 
+import collections
 import inspect
 import itertools
 import sys
@@ -15,49 +16,87 @@ def teststack(request):
     return request.param
 
 
-def test_box_put_key(boxclass, teststack, supported_key):
+def test_stack_put_key(boxclass, teststack, supported_key):
     testbox = boxclass()
 
     with teststack.push(testbox):
         teststack.put(supported_key, "the-value")
+        assert teststack.get(supported_key) == "the-value"
 
-    assert testbox.get(supported_key) == "the-value"
 
-
-def test_box_put_value(boxclass, teststack, supported_value):
+def test_stack_put_value(boxclass, teststack, supported_value):
     testbox = boxclass()
 
     with teststack.push(testbox):
         teststack.put("the-key", supported_value)
+        assert teststack.get("the-key") is supported_value
 
-    assert testbox.get("the-key") is supported_value
 
-
-def test_box_put_factory(boxclass, teststack):
+def test_stack_put_factory(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
         teststack.put("the-key", factory=object)
 
-    objects = [testbox.get("the-key") for _ in range(10)]
+        objects = [teststack.get("the-key") for _ in range(10)]
 
-    assert len(objects) == 10
-    assert len(set(map(id, objects))) == 10
+        assert len(objects) == 10
+        assert len(set(map(id, objects))) == 10
 
 
-def test_box_put_factory_singleton_scope(boxclass, teststack):
+def test_stack_put_factory_singleton_scope(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
         teststack.put("the-key", factory=object, scope=picobox.singleton)
 
-    objects = [testbox.get("the-key") for _ in range(10)]
+        objects = [teststack.get("the-key") for _ in range(10)]
 
-    assert len(objects) == 10
-    assert len(set(map(id, objects))) == 1
+        assert len(objects) == 10
+        assert len(set(map(id, objects))) == 1
 
 
-def test_box_put_factory_dependency(boxclass, teststack):
+def test_stack_put_factory_custom_scope(boxclass, teststack):
+    class namespacescope(picobox.Scope):
+        def __init__(self):
+            self._store = collections.defaultdict(dict)
+
+        def set(self, key, value):
+            self._store[namespace][key] = value
+
+        def get(self, key):
+            return self._store[namespace][key]
+
+    testbox = boxclass()
+
+    with teststack.push(testbox):
+        teststack.put("the-key", factory=object, scope=namespacescope)
+
+        objects = []
+
+        namespace = "one"
+        objects.extend(
+            [
+                teststack.get("the-key"),
+                teststack.get("the-key"),
+            ]
+        )
+
+        namespace = "two"
+        objects.extend(
+            [
+                teststack.get("the-key"),
+                teststack.get("the-key"),
+            ]
+        )
+
+        assert len(objects) == 4
+        assert len(set(map(id, objects[:2]))) == 1
+        assert len(set(map(id, objects[2:]))) == 1
+        assert len(set(map(id, objects))) == 2
+
+
+def test_stack_put_factory_dependency(boxclass, teststack):
     testbox = boxclass()
 
     @teststack.pass_("a")
@@ -71,7 +110,16 @@ def test_box_put_factory_dependency(boxclass, teststack):
         assert teststack.get("b") == 14
 
 
-def test_box_put_value_factory_required(boxclass, teststack):
+def test_stack_put_changes_box(boxclass, teststack):
+    testbox = boxclass()
+
+    with teststack.push(testbox):
+        teststack.put("the-key", "the-value")
+
+    assert testbox.get("the-key") == "the-value"
+
+
+def test_stack_put_value_factory_required(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
@@ -83,7 +131,7 @@ def test_box_put_value_factory_required(boxclass, teststack):
     )
 
 
-def test_box_put_value_and_factory(boxclass, teststack):
+def test_stack_put_value_and_factory(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
@@ -93,7 +141,7 @@ def test_box_put_value_and_factory(boxclass, teststack):
     assert str(excinfo.value) == "Box.put() takes either 'value' or 'factory', not both"
 
 
-def test_box_put_value_and_scope(boxclass, teststack):
+def test_stack_put_value_and_scope(boxclass, teststack):
     testbox = boxclass()
 
     with teststack.push(testbox):
@@ -103,35 +151,19 @@ def test_box_put_value_and_scope(boxclass, teststack):
     assert str(excinfo.value) == "Box.put() takes 'scope' when 'factory' provided"
 
 
-def test_box_put_runtimeerror(boxclass, teststack):
+def test_stack_put_runtimeerror(boxclass, teststack):
     with pytest.raises(RuntimeError) as excinfo:
         teststack.put("the-key", object())
 
     assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
 
-def test_box_get_value(boxclass, teststack, supported_value):
+def test_stack_get_retrieves_from_box(boxclass, teststack):
     testbox = boxclass()
-    testbox.put("the-key", supported_value)
+    testbox.put("the-key", "the-value")
 
     with teststack.push(testbox):
-        assert teststack.get("the-key") is supported_value
-
-
-def test_box_get_keyerror(boxclass, teststack):
-    testbox = boxclass()
-
-    with teststack.push(testbox):
-        with pytest.raises(KeyError, match="the-key"):
-            teststack.get("the-key")
-
-
-def test_box_get_default(boxclass, teststack):
-    testbox = boxclass()
-    sentinel = object()
-
-    with teststack.push(testbox):
-        assert teststack.get("the-key", sentinel) is sentinel
+        assert teststack.get("the-key") == "the-value"
 
 
 @pytest.mark.parametrize(
@@ -141,7 +173,7 @@ def test_box_get_default(boxclass, teststack):
         {"chain": False},
     ],
 )
-def test_box_get_from_top(boxclass, teststack, kwargs):
+def test_stack_get_from_top(boxclass, teststack, kwargs):
     testbox_a = boxclass()
     testbox_a.put("the-key", "a")
     testbox_a.put("the-pin", "a")
@@ -156,14 +188,15 @@ def test_box_get_from_top(boxclass, teststack, kwargs):
         with teststack.push(testbox_b, **kwargs):
             assert teststack.get("the-key") == "b"
 
-            with pytest.raises(KeyError, match="the-pin"):
+            with pytest.raises(KeyError) as excinfo:
                 teststack.get("the-pin")
+            assert str(excinfo.value) == "'the-pin'"
 
         assert teststack.get("the-key") == "a"
         assert teststack.get("the-pin") == "a"
 
 
-def test_box_get_from_top_chain(boxclass, teststack):
+def test_stack_get_from_top_chain(boxclass, teststack):
     testbox_a = boxclass()
     testbox_a.put("the-key", "a")
     testbox_a.put("the-pin", "a")
@@ -188,7 +221,24 @@ def test_box_get_from_top_chain(boxclass, teststack):
                 assert teststack.get("the-pin") == "a"
 
 
-def test_box_get_runtimeerror(teststack):
+def test_stack_get_keyerror(boxclass, teststack):
+    testbox = boxclass()
+
+    with teststack.push(testbox):
+        with pytest.raises(KeyError) as excinfo:
+            teststack.get("the-key")
+        assert str(excinfo.value) == "'the-key'"
+
+
+def test_stack_get_default(boxclass, teststack):
+    testbox = boxclass()
+    default = object()
+
+    with teststack.push(testbox):
+        assert teststack.get("the-key", default) is default
+
+
+def test_stack_get_runtimeerror(teststack):
     with pytest.raises(RuntimeError) as excinfo:
         teststack.get("the-key")
 
@@ -205,7 +255,7 @@ def test_box_get_runtimeerror(teststack):
         ((), {"b": 2, "c": 3}, 15),
     ],
 )
-def test_box_pass_a(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_a(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
 
@@ -228,7 +278,7 @@ def test_box_pass_a(boxclass, teststack, args, kwargs, rv):
         ((), {"a": 1, "c": 3}, 14),
     ],
 )
-def test_box_pass_b(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_b(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("b", 10)
 
@@ -252,7 +302,7 @@ def test_box_pass_b(boxclass, teststack, args, kwargs, rv):
         ((), {"a": 1, "b": 2}, 13),
     ],
 )
-def test_box_pass_c(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_c(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("c", 10)
 
@@ -276,7 +326,7 @@ def test_box_pass_c(boxclass, teststack, args, kwargs, rv):
         ((), {"a": 1, "b": 2}, 13),
     ],
 )
-def test_box_pass_c_default(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_c_default(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("c", 10)
 
@@ -301,7 +351,7 @@ def test_box_pass_c_default(boxclass, teststack, args, kwargs, rv):
         ((), {"c": 3}, 113),
     ],
 )
-def test_box_pass_ab(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_ab(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("b", 100)
@@ -331,7 +381,7 @@ def test_box_pass_ab(boxclass, teststack, args, kwargs, rv):
         ((), {"a": 1}, 111),
     ],
 )
-def test_box_pass_bc(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_bc(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("b", 10)
     testbox.put("c", 100)
@@ -359,7 +409,7 @@ def test_box_pass_bc(boxclass, teststack, args, kwargs, rv):
         ((), {"b": 2}, 112),
     ],
 )
-def test_box_pass_ac(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_ac(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("c", 100)
@@ -390,7 +440,7 @@ def test_box_pass_ac(boxclass, teststack, args, kwargs, rv):
         ((), {}, 1110),
     ],
 )
-def test_box_pass_abc(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_abc(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("b", 100)
@@ -417,7 +467,7 @@ def test_box_pass_abc(boxclass, teststack, args, kwargs, rv):
         ((), {"a": 1, "c": 3}, 14),
     ],
 )
-def test_box_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("d", 10)
 
@@ -437,7 +487,7 @@ def test_box_pass_d_as_b(boxclass, teststack, args, kwargs, rv):
         ((), {}, 42),
     ],
 )
-def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
+def test_stack_pass_method(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("x", 42)
 
@@ -459,17 +509,17 @@ def test_box_pass_method(boxclass, teststack, args, kwargs, rv):
         ((), {}, 42),
     ],
 )
-async def test_box_pass_coroutine(boxclass, teststack, args, kwargs, rv):
+async def test_stack_pass_coroutine(boxclass, teststack, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("x", 42)
 
     @teststack.pass_("x")
-    async def co(x):
+    async def fn(x):
         return x
 
     with teststack.push(testbox):
-        assert inspect.iscoroutinefunction(co)
-        assert await co(*args, **kwargs) == rv
+        assert inspect.iscoroutinefunction(fn)
+        assert await fn(*args, **kwargs) == rv
 
 
 @pytest.mark.parametrize(
@@ -480,14 +530,11 @@ async def test_box_pass_coroutine(boxclass, teststack, args, kwargs, rv):
         ((), {}, 42),
     ],
 )
-def test_box_pass_key_type(boxclass, teststack, args, kwargs, rv):
-    class key:
-        pass
-
+def test_stack_pass_key(boxclass, teststack, supported_key, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put(key, 1)
+    testbox.put(supported_key, 1)
 
-    @testbox.pass_(key, as_="x")
+    @testbox.pass_(supported_key, as_="x")
     def fn(x):
         return x + 41
 
@@ -495,7 +542,7 @@ def test_box_pass_key_type(boxclass, teststack, args, kwargs, rv):
         assert fn(*args, **kwargs) == rv
 
 
-def test_box_pass_unexpected_argument(boxclass, teststack):
+def test_stack_pass_unexpected_argument(boxclass, teststack):
     testbox = boxclass()
     testbox.put("d", 10)
 
@@ -509,12 +556,12 @@ def test_box_pass_unexpected_argument(boxclass, teststack):
 
     expected = "fn() got an unexpected keyword argument 'd'"
     if sys.version_info >= (3, 10):
-        expected = f"test_box_pass_unexpected_argument.<locals>.{expected}"
+        expected = f"test_stack_pass_unexpected_argument.<locals>.{expected}"
 
     assert str(excinfo.value) == expected
 
 
-def test_box_pass_keyerror(boxclass, teststack):
+def test_stack_pass_keyerror(boxclass, teststack):
     testbox = boxclass()
 
     @teststack.pass_("b")
@@ -522,22 +569,12 @@ def test_box_pass_keyerror(boxclass, teststack):
         return a + b
 
     with teststack.push(testbox):
-        with pytest.raises(KeyError, match="b"):
+        with pytest.raises(KeyError) as excinfo:
             fn(1)
+        assert str(excinfo.value) == "'b'"
 
 
-def test_box_pass_runtimeerror(teststack):
-    @teststack.pass_("a")
-    def fn(a):
-        return a
-
-    with pytest.raises(RuntimeError) as excinfo:
-        fn()
-
-    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
-
-
-def test_box_pass_optimization(boxclass, teststack, request):
+def test_stack_pass_optimization(request, boxclass, teststack):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -559,7 +596,7 @@ def test_box_pass_optimization(boxclass, teststack, request):
         assert len(fn()) == 1
 
 
-def test_box_pass_optimization_complex(boxclass, teststack, request):
+def test_stack_pass_optimization_complex(request, boxclass, teststack):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -591,7 +628,7 @@ def test_box_pass_optimization_complex(boxclass, teststack, request):
 
 
 @pytest.mark.asyncio()
-async def test_box_pass_optimization_async(boxclass, teststack, request):
+async def test_stack_pass_optimization_async(request, boxclass, teststack):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -613,19 +650,31 @@ async def test_box_pass_optimization_async(boxclass, teststack, request):
         assert len(await fn()) == 1
 
 
-def test_chainbox_put_changes_box(teststack):
+def test_stack_pass_runtimeerror(teststack):
+    @teststack.pass_("a")
+    def fn(a):
+        return a
+
+    with pytest.raises(RuntimeError) as excinfo:
+        fn()
+
+    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
+
+
+def test_stack_put_changes_chainbox(teststack):
     testbox = picobox.Box()
     testchainbox = picobox.ChainBox(testbox)
 
     with teststack.push(testchainbox):
-        with pytest.raises(KeyError, match="the-key"):
+        with pytest.raises(KeyError) as excinfo:
             teststack.get("the-key")
-        teststack.put("the-key", 42)
+        assert str(excinfo.value) == "'the-key'"
 
+        teststack.put("the-key", 42)
         assert testbox.get("the-key") == 42
 
 
-def test_chainbox_get_chained(teststack):
+def test_stack_get_chained(teststack):
     testbox_a = picobox.Box()
     testbox_a.put("the-key", 42)
 
@@ -640,11 +689,11 @@ def test_chainbox_get_chained(teststack):
         assert testchainbox.get("the-pin") == 12
 
 
-def test_stack_isolated(boxclass):
-    testbox_a = picobox.Box()
+def test_stack_state_not_shared(boxclass):
+    testbox_a = boxclass()
     testbox_a.put("the-key", 42)
 
-    testbox_b = picobox.Box()
+    testbox_b = boxclass()
     testbox_b.put("the-pin", 12)
 
     teststack_a = picobox.Stack()
@@ -656,32 +705,36 @@ def test_stack_isolated(boxclass):
         assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
 
         with teststack_b.push(testbox_b):
-            with pytest.raises(KeyError, match="the-pin"):
+            with pytest.raises(KeyError) as excinfo:
                 teststack_a.get("the-pin")
+            assert str(excinfo.value) == "'the-pin'"
+
             assert teststack_b.get("the-pin") == 12
 
 
-def test_push_pop_as_regular_functions(teststack):
-    @teststack.pass_("magic")
-    def do(magic):
-        return magic + 1
-
-    foobox = picobox.Box()
+def test_stack_push_pop_function_interface(boxclass, teststack):
+    foobox = boxclass()
     foobox.put("magic", 42)
 
-    barbox = picobox.Box()
+    barbox = boxclass()
     barbox.put("magic", 13)
 
+    @teststack.pass_("magic")
+    def fn(magic):
+        return magic + 1
+
     teststack.push(foobox)
-    assert do() == 43
+    assert fn() == 43
 
     teststack.push(barbox)
-    assert do() == 14
+    assert fn() == 14
 
     assert teststack.pop() is barbox
     assert teststack.pop() is foobox
 
 
-def test_pop_empty_stack(teststack):
-    with pytest.raises(IndexError):
+def test_stack_pop_indexerror(teststack):
+    with pytest.raises(IndexError) as excinfo:
         teststack.pop()
+
+    assert str(excinfo.value) == "pop from empty list"

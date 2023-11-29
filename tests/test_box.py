@@ -136,9 +136,9 @@ def test_box_get_keyerror(boxclass):
 
 def test_box_get_default(boxclass):
     testbox = boxclass()
-    sentinel = object()
+    default = object()
 
-    assert testbox.get("the-key", sentinel) is sentinel
+    assert testbox.get("the-key", default) is default
 
 
 @pytest.mark.parametrize(
@@ -151,7 +151,7 @@ def test_box_get_default(boxclass):
         ((), {"b": 2, "c": 3}, 15),
     ],
 )
-def test_box_pass_a(args, kwargs, rv, boxclass):
+def test_box_pass_a(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
 
@@ -173,7 +173,7 @@ def test_box_pass_a(args, kwargs, rv, boxclass):
         ((), {"a": 1, "c": 3}, 14),
     ],
 )
-def test_box_pass_b(args, kwargs, rv, boxclass):
+def test_box_pass_b(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("b", 10)
 
@@ -196,7 +196,7 @@ def test_box_pass_b(args, kwargs, rv, boxclass):
         ((), {"a": 1, "b": 2}, 13),
     ],
 )
-def test_box_pass_c(args, kwargs, rv, boxclass):
+def test_box_pass_c(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("c", 10)
 
@@ -219,7 +219,7 @@ def test_box_pass_c(args, kwargs, rv, boxclass):
         ((), {"a": 1, "b": 2}, 13),
     ],
 )
-def test_box_pass_c_default(args, kwargs, rv, boxclass):
+def test_box_pass_c_default(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("c", 10)
 
@@ -243,7 +243,7 @@ def test_box_pass_c_default(args, kwargs, rv, boxclass):
         ((), {"c": 3}, 113),
     ],
 )
-def test_box_pass_ab(args, kwargs, rv, boxclass):
+def test_box_pass_ab(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("b", 100)
@@ -272,7 +272,7 @@ def test_box_pass_ab(args, kwargs, rv, boxclass):
         ((), {"a": 1}, 111),
     ],
 )
-def test_box_pass_bc(args, kwargs, rv, boxclass):
+def test_box_pass_bc(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("b", 10)
     testbox.put("c", 100)
@@ -299,7 +299,7 @@ def test_box_pass_bc(args, kwargs, rv, boxclass):
         ((), {"b": 2}, 112),
     ],
 )
-def test_box_pass_ac(args, kwargs, rv, boxclass):
+def test_box_pass_ac(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("c", 100)
@@ -329,7 +329,7 @@ def test_box_pass_ac(args, kwargs, rv, boxclass):
         ((), {}, 1110),
     ],
 )
-def test_box_pass_abc(args, kwargs, rv, boxclass):
+def test_box_pass_abc(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("a", 10)
     testbox.put("b", 100)
@@ -355,7 +355,7 @@ def test_box_pass_abc(args, kwargs, rv, boxclass):
         ((), {"a": 1, "c": 3}, 14),
     ],
 )
-def test_box_pass_d_as_b(args, kwargs, rv, boxclass):
+def test_box_pass_d_as_b(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("d", 10)
 
@@ -374,7 +374,7 @@ def test_box_pass_d_as_b(args, kwargs, rv, boxclass):
         ((), {}, 42),
     ],
 )
-def test_box_pass_method(args, kwargs, rv, boxclass):
+def test_box_pass_method(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("x", 42)
 
@@ -395,16 +395,16 @@ def test_box_pass_method(args, kwargs, rv, boxclass):
         ((), {}, 42),
     ],
 )
-async def test_box_pass_coroutine(args, kwargs, rv, boxclass):
+async def test_box_pass_coroutine(boxclass, args, kwargs, rv):
     testbox = boxclass()
     testbox.put("x", 42)
 
     @testbox.pass_("x")
-    async def co(x):
+    async def fn(x):
         return x
 
-    assert inspect.iscoroutinefunction(co)
-    assert await co(*args, **kwargs) == rv
+    assert inspect.iscoroutinefunction(fn)
+    assert await fn(*args, **kwargs) == rv
 
 
 @pytest.mark.parametrize(
@@ -415,14 +415,11 @@ async def test_box_pass_coroutine(args, kwargs, rv, boxclass):
         ((), {}, 42),
     ],
 )
-def test_box_pass_key_type(args, kwargs, rv, boxclass):
-    class key:
-        pass
-
+def test_box_pass_key(boxclass, supported_key, args, kwargs, rv):
     testbox = boxclass()
-    testbox.put(key, 1)
+    testbox.put(supported_key, 1)
 
-    @testbox.pass_(key, as_="x")
+    @testbox.pass_(supported_key, as_="x")
     def fn(x):
         return x + 41
 
@@ -460,7 +457,7 @@ def test_box_pass_keyerror(boxclass):
     assert str(excinfo.value) == "'b'"
 
 
-def test_box_pass_optimization(boxclass, request):
+def test_box_pass_optimization(request, boxclass):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -481,7 +478,7 @@ def test_box_pass_optimization(boxclass, request):
     assert len(fn()) == 1
 
 
-def test_box_pass_optimization_complex(boxclass, request):
+def test_box_pass_optimization_complex(request, boxclass):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -512,7 +509,7 @@ def test_box_pass_optimization_complex(boxclass, request):
 
 
 @pytest.mark.asyncio()
-async def test_box_pass_optimization_async(boxclass, request):
+async def test_box_pass_optimization_async(request, boxclass):
     testbox = boxclass()
     testbox.put("a", 1)
     testbox.put("b", 1)
@@ -537,10 +534,11 @@ def test_chainbox_put_changes_box():
     testbox = picobox.Box()
     testchainbox = picobox.ChainBox(testbox)
 
-    with pytest.raises(KeyError, match="the-key"):
+    with pytest.raises(KeyError) as excinfo:
         testchainbox.get("the-key")
-    testchainbox.put("the-key", 42)
+    assert str(excinfo.value) == "'the-key'"
 
+    testchainbox.put("the-key", 42)
     assert testbox.get("the-key") == 42
 
 
