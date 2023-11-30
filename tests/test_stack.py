@@ -733,8 +733,8 @@ def test_stack_push_pop_function_interface(boxclass, teststack):
     assert teststack.pop() is foobox
 
 
-def test_stack_pop_indexerror(teststack):
-    with pytest.raises(IndexError) as excinfo:
+def test_stack_pop_runtimeerror(teststack):
+    with pytest.raises(RuntimeError) as excinfo:
         teststack.pop()
 
-    assert str(excinfo.value) == "pop from empty list"
+    assert str(excinfo.value) == "No boxes found on the stack, please `.push()` a box first."
