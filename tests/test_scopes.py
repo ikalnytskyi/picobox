@@ -1,6 +1,7 @@
 """Test picobox's scopes implementations."""
 
-import contextvars as _contextvars
+import asyncio
+import contextvars
 import threading
 
 import pytest
@@ -8,117 +9,105 @@ import pytest
 import picobox
 
 
-@pytest.fixture()
-def singleton():
-    return picobox.singleton()
+def run_in_thread(function, *args, **kwargs):
+    closure = {}
+
+    def target():
+        try:
+            closure["ret"] = function(*args, **kwargs)
+        except Exception as e:
+            closure["exc"] = e
+
+    worker = threading.Thread(target=target)
+    worker.start()
+    worker.join()
+
+    if "exc" in closure:
+        raise closure["exc"]
+    return closure["ret"]
 
 
-@pytest.fixture()
-def threadlocal():
-    return picobox.threadlocal()
+def run_in_event_loop(function, *args, **kwargs):
+    if not asyncio.iscoroutinefunction(function):
 
+        async def coroutine_function(*args, **kwargs):
+            return function(*args, **kwargs)
+    else:
+        coroutine_function = function
 
-@pytest.fixture()
-def contextvars():
-    return picobox.contextvars()
-
-
-@pytest.fixture()
-def noscope():
-    return picobox.noscope()
-
-
-@pytest.fixture()
-def exec_thread():
-    """Run a given callback in a separate OS thread."""
-
-    def executor(callback, *args, **kwargs):
-        closure = {}
-
-        def target():
-            try:
-                closure["ret"] = callback(*args, **kwargs)
-            except Exception as e:
-                closure["exc"] = e
-
-        worker = threading.Thread(target=target)
-        worker.start()
-        worker.join()
-
-        if "exc" in closure:
-            raise closure["exc"]
-        return closure["ret"]
-
-    return executor
-
-
-@pytest.fixture()
-def exec_coroutine(request):
-    """Run a given coroutine function in a separate event loop."""
-
-    asyncio = pytest.importorskip("asyncio")
     loop = asyncio.new_event_loop()
-
-    def executor(function, *args, **kwargs):
-        if not asyncio.iscoroutinefunction(function):
-
-            async def coroutine_function(*args, **kwargs):
-                return function(*args, **kwargs)
-
-        else:
-            coroutine_function = function
-        return loop.run_until_complete(coroutine_function(*args, **kwargs))
-
     try:
-        yield executor
+        rv = loop.run_until_complete(coroutine_function(*args, **kwargs))
     finally:
         loop.close()
+    return rv
 
 
-@pytest.fixture()
-def exec_context():
-    """Run a given callback in a separate context (PEP 567)."""
-
-    def executor(callback, *args, **kwargs):
-        context = _contextvars.copy_context()
-        return context.run(callback, *args, **kwargs)
-
-    return executor
+def run_in_context(function, *args, **kwargs):
+    context = contextvars.copy_context()
+    return context.run(function, *args, **kwargs)
 
 
 @pytest.mark.parametrize(
-    "scopename",
+    "scope_factory",
     [
-        "singleton",
-        "threadlocal",
-        "contextvars",
+        picobox.singleton,
+        picobox.threadlocal,
+        picobox.contextvars,
     ],
 )
-def test_scope_set(request, scopename, supported_key, supported_value):
-    scope = request.getfixturevalue(scopename)
+def test_scope_set_key(scope_factory, supported_key):
+    scope = scope_factory()
 
-    scope.set(supported_key, supported_value)
-    assert scope.get(supported_key) is supported_value
+    scope.set(supported_key, "the-value")
+    assert scope.get(supported_key) == "the-value"
 
 
-def test_scope_set_noscope(supported_key, supported_value):
+@pytest.mark.parametrize(
+    "scope_factory",
+    [
+        picobox.singleton,
+        picobox.threadlocal,
+        picobox.contextvars,
+    ],
+)
+def test_scope_set_value(scope_factory, supported_value):
+    scope = scope_factory()
+
+    scope.set("the-key", supported_value)
+    assert scope.get("the-key") is supported_value
+
+
+def test_scope_set_key_noscope(supported_key):
     scope = picobox.noscope()
-    scope.set(supported_key, supported_value)
+    scope.set(supported_key, "the-value")
 
-    with pytest.raises(KeyError, match=str(supported_key)):
+    with pytest.raises(KeyError) as excinfo:
         scope.get(supported_key)
 
+    assert str(excinfo.value) == f"{supported_key!r}"
+
+
+def test_scope_set_value_noscope(supported_value):
+    scope = picobox.noscope()
+    scope.set("the-key", supported_value)
+
+    with pytest.raises(KeyError) as excinfo:
+        scope.get("the-key")
+
+    assert str(excinfo.value) == "'the-key'"
+
 
 @pytest.mark.parametrize(
-    "scopename",
+    "scope_factory",
     [
-        "singleton",
-        "threadlocal",
-        "contextvars",
+        picobox.singleton,
+        picobox.threadlocal,
+        picobox.contextvars,
     ],
 )
-def test_scope_set_overwrite(request, scopename):
-    scope = request.getfixturevalue(scopename)
+def test_scope_set_overwrite(scope_factory):
+    scope = scope_factory()
     value = object()
 
     scope.set("the-key", value)
@@ -129,31 +118,33 @@ def test_scope_set_overwrite(request, scopename):
 
 
 @pytest.mark.parametrize(
-    "scopename",
+    "scope_factory",
     [
-        "singleton",
-        "threadlocal",
-        "contextvars",
-        "noscope",
+        picobox.singleton,
+        picobox.threadlocal,
+        picobox.contextvars,
+        picobox.noscope,
     ],
 )
-def test_scope_get_keyerror(request, scopename, supported_key):
-    scope = request.getfixturevalue(scopename)
+def test_scope_get_keyerror(scope_factory, supported_key):
+    scope = scope_factory()
 
-    with pytest.raises(KeyError, match=repr(supported_key)):
+    with pytest.raises(KeyError) as excinfo:
         scope.get(supported_key)
+
+    assert str(excinfo.value) == f"{supported_key!r}"
 
 
 @pytest.mark.parametrize(
-    "scopename",
+    "scope_factory",
     [
-        "singleton",
-        "threadlocal",
-        "contextvars",
+        picobox.singleton,
+        picobox.threadlocal,
+        picobox.contextvars,
     ],
 )
-def test_scope_state_not_leaked(request, scopename):
-    scope_a = request.getfixturevalue(scopename)
+def test_scope_state_not_shared_between_instances(scope_factory):
+    scope_a = scope_factory()
     value_a = object()
 
     scope_b = type(scope_a)()
@@ -162,76 +153,75 @@ def test_scope_state_not_leaked(request, scopename):
     scope_a.set("the-key", value_a)
     assert scope_a.get("the-key") is value_a
 
-    with pytest.raises(KeyError, match="the-key"):
+    with pytest.raises(KeyError) as excinfo:
         scope_b.get("the-key")
+    assert str(excinfo.value) == "'the-key'"
 
     scope_b.set("the-key", value_b)
     assert scope_b.get("the-key") is value_b
 
-    scope_a.set("the-key", value_a)
     assert scope_a.get("the-key") is value_a
 
 
 @pytest.mark.parametrize(
-    ("scopename", "executor"),
+    ("scope_factory", "run"),
     [
-        ("singleton", "exec_thread"),
-        ("singleton", "exec_coroutine"),
-        ("singleton", "exec_context"),
-        ("threadlocal", "exec_coroutine"),
-        ("threadlocal", "exec_context"),
+        (picobox.singleton, run_in_thread),
+        (picobox.singleton, run_in_event_loop),
+        (picobox.singleton, run_in_context),
+        (picobox.threadlocal, run_in_event_loop),
+        (picobox.threadlocal, run_in_context),
     ],
 )
-def test_scope_value_shared(request, scopename, executor):
-    scope = request.getfixturevalue(scopename)
+def test_scope_value_shared(scope_factory, run):
+    scope = scope_factory()
     value = object()
-    exec_ = request.getfixturevalue(executor)
 
-    exec_(scope.set, "the-key", value)
-    assert exec_(scope.get, "the-key") is value
+    run(scope.set, "the-key", value)
+    assert run(scope.get, "the-key") is value
 
 
 @pytest.mark.parametrize(
-    ("scopename", "executor"),
+    ("scope_factory", "run"),
     [
-        ("threadlocal", "exec_thread"),
-        ("contextvars", "exec_thread"),
-        ("contextvars", "exec_coroutine"),
-        ("contextvars", "exec_context"),
-        ("noscope", "exec_thread"),
-        ("noscope", "exec_coroutine"),
-        ("noscope", "exec_context"),
+        (picobox.threadlocal, run_in_thread),
+        (picobox.contextvars, run_in_thread),
+        (picobox.contextvars, run_in_event_loop),
+        (picobox.contextvars, run_in_context),
+        (picobox.noscope, run_in_thread),
+        (picobox.noscope, run_in_event_loop),
+        (picobox.noscope, run_in_context),
     ],
 )
-def test_scope_value_not_shared(request, scopename, executor):
-    scope = request.getfixturevalue(scopename)
+def test_scope_value_not_shared(scope_factory, run):
+    scope = scope_factory()
     value = object()
-    exec_ = request.getfixturevalue(executor)
 
-    exec_(scope.set, "the-key", value)
+    run(scope.set, "the-key", value)
 
-    with pytest.raises(KeyError, match="the-key"):
-        exec_(scope.get, "the-key")
+    with pytest.raises(KeyError) as excinfo:
+        run(scope.get, "the-key")
+
+    assert str(excinfo.value) == "'the-key'"
 
 
 @pytest.mark.parametrize(
-    ("scopename", "executor"),
+    ("scope_factory", "run"),
     [
-        ("singleton", "exec_thread"),
-        ("singleton", "exec_coroutine"),
-        ("singleton", "exec_context"),
-        ("threadlocal", "exec_thread"),
-        ("threadlocal", "exec_coroutine"),
-        ("threadlocal", "exec_context"),
-        ("contextvars", "exec_thread"),
-        ("contextvars", "exec_coroutine"),
-        ("contextvars", "exec_context"),
+        (picobox.singleton, run_in_thread),
+        (picobox.singleton, run_in_event_loop),
+        (picobox.singleton, run_in_context),
+        (picobox.threadlocal, run_in_thread),
+        (picobox.threadlocal, run_in_event_loop),
+        (picobox.threadlocal, run_in_context),
+        (picobox.contextvars, run_in_thread),
+        (picobox.contextvars, run_in_event_loop),
+        (picobox.contextvars, run_in_context),
     ],
 )
-def test_scope_value_downstack_shared(request, scopename, executor):
-    scope = request.getfixturevalue(scopename)
+def test_scope_value_downstack_shared(scope_factory, run):
+    scope = scope_factory()
     value = object()
-    exec_ = request.getfixturevalue(executor)
 
     def caller():
         scope.set("the-key", value)
@@ -240,21 +230,20 @@ def test_scope_value_downstack_shared(request, scopename, executor):
     def callee():
         return scope.get("the-key")
 
-    assert exec_(caller) is value
+    assert run(caller) is value
 
 
 @pytest.mark.parametrize(
-    ("scopename", "executor"),
+    ("scope_factory", "run"),
     [
-        ("noscope", "exec_thread"),
-        ("noscope", "exec_coroutine"),
-        ("noscope", "exec_context"),
+        (picobox.noscope, run_in_thread),
+        (picobox.noscope, run_in_event_loop),
+        (picobox.noscope, run_in_context),
     ],
 )
-def test_scope_value_downstack_not_shared(request, scopename, executor):
-    scope = request.getfixturevalue(scopename)
+def test_scope_value_downstack_not_shared(scope_factory, run):
+    scope = scope_factory()
     value = object()
-    exec_ = request.getfixturevalue(executor)
 
     def caller():
         scope.set("the-key", value)
@@ -263,25 +252,80 @@ def test_scope_value_downstack_not_shared(request, scopename, executor):
     def callee():
         return scope.get("the-key")
 
-    with pytest.raises(KeyError, match="the-key"):
-        exec_(caller)
+    with pytest.raises(KeyError) as excinfo:
+        run(caller)
+
+    assert str(excinfo.value) == "'the-key'"
 
 
 @pytest.mark.parametrize(
-    ("scopename", "executor"),
+    ("scope_factory", "run"),
     [
-        ("threadlocal", "exec_thread"),
-        ("contextvars", "exec_thread"),
-        ("contextvars", "exec_coroutine"),
-        ("contextvars", "exec_context"),
+        (picobox.singleton, run_in_thread),
+        (picobox.singleton, run_in_event_loop),
+        (picobox.singleton, run_in_context),
+        (picobox.threadlocal, run_in_thread),
+        (picobox.threadlocal, run_in_event_loop),
+        (picobox.threadlocal, run_in_context),
+        (picobox.contextvars, run_in_thread),
+        (picobox.contextvars, run_in_event_loop),
+        (picobox.contextvars, run_in_context),
     ],
 )
-def test_scope_not_leaked(request, scopename, executor):
-    scope = request.getfixturevalue(scopename)
-    exec_ = request.getfixturevalue(executor)
+def test_scope_value_upstack_shared(scope_factory, run):
+    scope = scope_factory()
+    value = object()
 
-    scope.set("a-key", "a-value")
-    exec_(scope.set, "the-key", "the-value")
+    def caller():
+        callee()
+        return scope.get("the-key")
 
-    with pytest.raises(KeyError, match="the-key"):
-        scope.get("the-key")
+    def callee():
+        scope.set("the-key", value)
+
+    assert run(caller) is value
+
+
+@pytest.mark.parametrize(
+    ("scope_factory", "run"),
+    [
+        (picobox.noscope, run_in_thread),
+        (picobox.noscope, run_in_event_loop),
+        (picobox.noscope, run_in_context),
+    ],
+)
+def test_scope_value_upstack_not_shared(scope_factory, run):
+    scope = scope_factory()
+    value = object()
+
+    def caller():
+        callee()
+        return scope.get("the-key")
+
+    def callee():
+        scope.set("the-key", value)
+
+    with pytest.raises(KeyError) as excinfo:
+        run(caller)
+
+    assert str(excinfo.value) == "'the-key'"
+
+
+@pytest.mark.parametrize(
+    ("scope_factory", "run"),
+    [
+        (picobox.threadlocal, run_in_thread),
+        (picobox.contextvars, run_in_thread),
+        (picobox.contextvars, run_in_event_loop),
+        (picobox.contextvars, run_in_context),
+    ],
+)
+def test_scope_is_scope_bound(scope_factory, run):
+    scope = scope_factory()
+
+    run(scope.set, "the-key", "the-value")
+
+    with pytest.raises(KeyError) as excinfo:
+        run(scope.get, "the-key")
+
+    assert str(excinfo.value) == "'the-key'"
