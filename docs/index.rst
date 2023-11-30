@@ -367,6 +367,11 @@ Release Notes
   lost its coroutine function marker, i.e. ``inspect.iscoroutinefunction()``
   returned ``False``.
 
+* Fix a bug when ``picobox.pop()`` threw a generic ``IndexError`` when there
+  were no pushed boxes on stack. Now ``RuntimeError`` exception is thrown
+  instead with a good-looking error message. The behavior is now consistent
+  with other functions such as ``picobox.put()`` or ``picobox.get()``.
+
 4.0.0
 `````
 

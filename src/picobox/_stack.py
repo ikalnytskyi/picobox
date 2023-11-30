@@ -7,6 +7,8 @@ import typing as t
 
 from ._box import Box, ChainBox
 
+_ERROR_MESSAGE_EMPTY_STACK = "No boxes found on the stack, please `.push()` a box first."
+
 
 def _copy_signature(method, instance=None):
     # This is a workaround to overcome 'sphinx.ext.autodoc' inability to
@@ -23,7 +25,7 @@ def _copy_signature(method, instance=None):
     return functools.wraps(method, (), ())
 
 
-def _create_stack_proxy(stack, empty_stack_error):
+def _create_stack_proxy(stack):
     """Create an object that proxies all calls to the top of the stack."""
 
     class _StackProxy:
@@ -31,7 +33,7 @@ def _create_stack_proxy(stack, empty_stack_error):
             try:
                 return getattr(stack[-1], name)
             except IndexError:
-                raise RuntimeError(empty_stack_error)
+                raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
 
     return _StackProxy()
 
@@ -103,9 +105,7 @@ class Stack:
         # that mimic Box interface but deal with a box on the top instead.
         # While it's not completely necessary for `put()` and `get()`, it's
         # crucial for `pass_()` due to its laziness and thus late evaluation.
-        self._topbox = _create_stack_proxy(
-            self._stack, "No boxes found on the stack, please `.push()` a box first."
-        )
+        self._topbox = _create_stack_proxy(self._stack)
 
     def __repr__(self):
         name = self._name
@@ -157,7 +157,10 @@ class Stack:
         # ensure the code works properly even when running on alternative
         # implementations.
         with self._lock:
-            return self._stack.pop()
+            try:
+                return self._stack.pop()
+            except IndexError:
+                raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
 
     @_copy_signature(Box.put)
     def put(self, *args, **kwargs):
