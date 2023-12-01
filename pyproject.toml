@@ -73,7 +73,7 @@ select = [
   "ERA",
   "RUF",
 ]
-ignore = ["D203", "D213", "D401", "S101", "B904", "ISC001", "PT011", "SIM117"]
+ignore = ["D107", "D203", "D213", "D401", "S101", "B904", "ISC001", "PT011", "SIM117"]
 line-length = 100
 
 [tool.ruff.isort]
