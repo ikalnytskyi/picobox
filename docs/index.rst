@@ -330,6 +330,15 @@ Scopes
 .. autodata:: noscope
     :annotation:
 
+.. autodata:: picobox.ext.wsgiscopes.ScopeMiddleware
+    :annotation:
+
+.. autodata:: picobox.ext.wsgiscopes.application
+    :annotation:
+
+.. autodata:: picobox.ext.wsgiscopes.request
+    :annotation:
+
 .. autodata:: picobox.ext.flaskscopes.application
     :annotation:
 

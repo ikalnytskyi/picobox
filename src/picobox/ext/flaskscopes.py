@@ -45,12 +45,17 @@ class _flaskscope(picobox.Scope):
 class application(_flaskscope):
     """Share instances across the same Flask (HTTP) application.
 
-    In most cases can be used interchangeably with :class:`picobox.singleton`
-    scope. Comes around when you have `multiple Flask applications`__ and you
-    want to have independent instances for each Flask application, despite
-    the fact they are running in the same WSGI context.
+    In typical scenarios, a single Flask application exists, making this scope
+    interchangeable with :class:`picobox.singleton`. However, unlike the
+    latter, the application scope ensures that dependencies are bound to the
+    lifespan of a specific application instance. This is particularly useful in
+    testing scenarios where each test involves creating a new application
+    instance or in situations where you have `multiple Flask applications`__.
 
-    .. __: http://flask.pocoo.org/docs/1.0/patterns/appdispatch/
+    .. __: https://flask.palletsprojects.com/en/3.0.x/patterns/appdispatch/
+
+    Unlike :class:`picobox.ext.wsgiscopes.application`, it requires no WSGI
+    middlewares.
 
     .. versionadded:: 2.2
     """
@@ -62,6 +67,13 @@ class application(_flaskscope):
 
 class request(_flaskscope):
     """Share instances across the same Flask (HTTP) request.
+
+    You might want to store your SQLAlchemy session or Request-ID per request.
+    In many cases this produces much more readable code than passing the whole
+    request context around.
+
+    Unlike :class:`picobox.ext.wsgiscopes.request`, it requires no WSGI
+    middlewares.
 
     .. versionadded:: 2.2
     """
