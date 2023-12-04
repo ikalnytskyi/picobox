@@ -10,6 +10,21 @@ import pytest
 from picobox.ext import wsgiscopes
 
 
+class ClientFacade:
+    """The facade around test client."""
+
+    def __init__(self, app):
+        self._testclient = app.test_client()
+
+    def run_endpoint(self, url):
+        response = self._testclient.get(url)
+
+        # Make sure that no mistakes are made and requested URL is found in
+        # the WSGI application. In the end, all we care is that the test is
+        # executed.
+        assert response.status_code == 200, response.content
+
+
 def run_in_thread(function, *args, **kwargs):
     closure = {}
 
@@ -55,11 +70,11 @@ def app_factory():
 
 
 @pytest.fixture()
-def testclient_factory():
+def client_factory():
     """A factory that creates test client instances."""
 
     def factory(app):
-        return app.test_client()
+        return ClientFacade(app)
 
     return factory
 
@@ -71,15 +86,15 @@ def testclient_factory():
         wsgiscopes.request,
     ],
 )
-def test_scope_set_key(app_factory, testclient_factory, scope_factory, supported_key):
+def test_scope_set_key(app_factory, client_factory, scope_factory, supported_key):
     scope = scope_factory()
 
     def endpoint():
         scope.set(supported_key, "the-value")
         assert scope.get(supported_key) == "the-value"
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -89,15 +104,15 @@ def test_scope_set_key(app_factory, testclient_factory, scope_factory, supported
         wsgiscopes.request,
     ],
 )
-def test_scope_set_value(app_factory, testclient_factory, scope_factory, supported_value):
+def test_scope_set_value(app_factory, client_factory, scope_factory, supported_value):
     scope = scope_factory()
 
     def endpoint():
         scope.set("the-value", supported_value)
         assert scope.get("the-value") is supported_value
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -107,7 +122,7 @@ def test_scope_set_value(app_factory, testclient_factory, scope_factory, support
         wsgiscopes.request,
     ],
 )
-def test_scope_set_overwrite(app_factory, testclient_factory, scope_factory):
+def test_scope_set_overwrite(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -118,8 +133,8 @@ def test_scope_set_overwrite(app_factory, testclient_factory, scope_factory):
         scope.set("the-key", "overwrite")
         assert scope.get("the-key") == "overwrite"
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -129,7 +144,7 @@ def test_scope_set_overwrite(app_factory, testclient_factory, scope_factory):
         wsgiscopes.request,
     ],
 )
-def test_scope_get_keyerror(app_factory, testclient_factory, scope_factory, supported_key):
+def test_scope_get_keyerror(app_factory, client_factory, scope_factory, supported_key):
     scope = scope_factory()
 
     def endpoint():
@@ -137,8 +152,8 @@ def test_scope_get_keyerror(app_factory, testclient_factory, scope_factory, supp
             scope.get(supported_key)
         assert str(excinfo.value) == f"{supported_key!r}"
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -148,7 +163,7 @@ def test_scope_get_keyerror(app_factory, testclient_factory, scope_factory, supp
         wsgiscopes.request,
     ],
 )
-def test_scope_state_not_shared_between_instances(app_factory, testclient_factory, scope_factory):
+def test_scope_state_not_shared_between_instances(app_factory, client_factory, scope_factory):
     scope_a = scope_factory()
     value_a = object()
 
@@ -168,8 +183,8 @@ def test_scope_state_not_shared_between_instances(app_factory, testclient_factor
 
         assert scope_a.get("the-key") is value_a
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -178,7 +193,7 @@ def test_scope_state_not_shared_between_instances(app_factory, testclient_factor
         wsgiscopes.application,
     ],
 )
-def test_scope_value_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -188,14 +203,14 @@ def test_scope_value_shared(app_factory, testclient_factory, scope_factory):
     def endpoint2():
         assert scope.get("the-key") is value
 
-    client = testclient_factory(
+    client = client_factory(
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
         )
     )
-    client.get("/1")
-    client.get("/2")
+    client.run_endpoint("/1")
+    client.run_endpoint("/2")
 
 
 @pytest.mark.parametrize(
@@ -204,7 +219,7 @@ def test_scope_value_shared(app_factory, testclient_factory, scope_factory):
         wsgiscopes.request,
     ],
 )
-def test_scope_value_not_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_not_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -216,14 +231,14 @@ def test_scope_value_not_shared(app_factory, testclient_factory, scope_factory):
             assert scope.get("the-key") is value
         assert str(excinfo.value) == "'the-key'"
 
-    client = testclient_factory(
+    client = client_factory(
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
         )
     )
-    client.get("/1")
-    client.get("/2")
+    client.run_endpoint("/1")
+    client.run_endpoint("/2")
 
 
 @pytest.mark.parametrize(
@@ -233,7 +248,7 @@ def test_scope_value_not_shared(app_factory, testclient_factory, scope_factory):
         wsgiscopes.request,
     ],
 )
-def test_scope_value_downstack_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_downstack_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -244,8 +259,8 @@ def test_scope_value_downstack_shared(app_factory, testclient_factory, scope_fac
     def subroutine():
         assert scope.get("the-key") is value
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -255,7 +270,7 @@ def test_scope_value_downstack_shared(app_factory, testclient_factory, scope_fac
         wsgiscopes.request,
     ],
 )
-def test_scope_value_downstack_thread_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_downstack_thread_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -275,8 +290,8 @@ def test_scope_value_downstack_thread_shared(app_factory, testclient_factory, sc
             "been used with your WSGI application."
         )
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -286,7 +301,7 @@ def test_scope_value_downstack_thread_shared(app_factory, testclient_factory, sc
         wsgiscopes.request,
     ],
 )
-def test_scope_value_upstack_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_upstack_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -297,8 +312,8 @@ def test_scope_value_upstack_shared(app_factory, testclient_factory, scope_facto
     def subroutine():
         scope.set("the-key", value)
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
 @pytest.mark.parametrize(
@@ -308,7 +323,7 @@ def test_scope_value_upstack_shared(app_factory, testclient_factory, scope_facto
         wsgiscopes.request,
     ],
 )
-def test_scope_value_upstack_thread_shared(app_factory, testclient_factory, scope_factory):
+def test_scope_value_upstack_thread_shared(app_factory, client_factory, scope_factory):
     scope = scope_factory()
     value = object()
 
@@ -327,11 +342,11 @@ def test_scope_value_upstack_thread_shared(app_factory, testclient_factory, scop
             "been used with your WSGI application."
         )
 
-    client = testclient_factory(app_factory(("/", endpoint)))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint)))
+    client.run_endpoint("/")
 
 
-def test_scope_application_is_application_bound(app_factory, testclient_factory):
+def test_scope_application_is_application_bound(app_factory, client_factory):
     scope = wsgiscopes.application()
     value = object()
 
@@ -344,14 +359,14 @@ def test_scope_application_is_application_bound(app_factory, testclient_factory)
             scope.get("the-key")
         assert str(excinfo.value) == "'the-key'"
 
-    client1 = testclient_factory(app_factory(("/1", endpoint1)))
-    client2 = testclient_factory(app_factory(("/2", endpoint2)))
+    client1 = client_factory(app_factory(("/1", endpoint1)))
+    client2 = client_factory(app_factory(("/2", endpoint2)))
 
-    client1.get("/1")
-    client2.get("/2")
+    client1.run_endpoint("/1")
+    client2.run_endpoint("/2")
 
 
-def test_scope_request_is_request_bound(app_factory, testclient_factory):
+def test_scope_request_is_request_bound(app_factory, client_factory):
     scope = wsgiscopes.request()
     value = object()
     event1 = threading.Event()
@@ -370,7 +385,7 @@ def test_scope_request_is_request_bound(app_factory, testclient_factory):
         assert str(excinfo.value) == "'the-key'"
         event2.set()
 
-    client = testclient_factory(
+    client = client_factory(
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
@@ -378,8 +393,8 @@ def test_scope_request_is_request_bound(app_factory, testclient_factory):
     )
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future1 = executor.submit(client.get, "/1")
-        future2 = executor.submit(client.get, "/2")
+        future1 = executor.submit(client.run_endpoint, "/1")
+        future2 = executor.submit(client.run_endpoint, "/2")
 
         for future in concurrent.futures.as_completed({future1, future2}):
             future.result()
@@ -392,7 +407,7 @@ def test_scope_request_is_request_bound(app_factory, testclient_factory):
         wsgiscopes.request,
     ],
 )
-def test_scope_wo_middleware(app_factory, testclient_factory, scope_factory):
+def test_scope_wo_middleware(app_factory, client_factory, scope_factory):
     scope = scope_factory()
 
     def endpoint():
@@ -407,5 +422,5 @@ def test_scope_wo_middleware(app_factory, testclient_factory, scope_factory):
             "been used with your WSGI application."
         )
 
-    client = testclient_factory(app_factory(("/", endpoint), with_scope_middleware=False))
-    client.get("/")
+    client = client_factory(app_factory(("/", endpoint), with_scope_middleware=False))
+    client.run_endpoint("/")
