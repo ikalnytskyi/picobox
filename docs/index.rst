@@ -339,6 +339,15 @@ Scopes
 .. autodata:: picobox.ext.wsgiscopes.request
     :annotation:
 
+.. autodata:: picobox.ext.asgiscopes.ScopeMiddleware
+    :annotation:
+
+.. autodata:: picobox.ext.asgiscopes.application
+    :annotation:
+
+.. autodata:: picobox.ext.asgiscopes.request
+    :annotation:
+
 .. autodata:: picobox.ext.flaskscopes.application
     :annotation:
 
@@ -371,6 +380,12 @@ Release Notes
 `````
 
 (unreleased)
+
+* Add ``picobox.ext.wsgiscopes`` extensions with ``application`` and ``request``
+  scopes for WSGI applications.
+
+* Add ``picobox.ext.asgiscopes`` extensions with ``application`` and ``request``
+  scopes for ASGI applications.
 
 * Fix a bug when a coroutine function wrapped with ``@picobox.pass_()``
   lost its coroutine function marker, i.e. ``inspect.iscoroutinefunction()``
