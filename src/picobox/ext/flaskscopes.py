@@ -1,5 +1,6 @@
 """Scopes for Flask framework."""
 
+import typing as t
 import uuid
 
 import flask
@@ -10,9 +11,8 @@ import picobox
 class _flaskscope(picobox.Scope):
     """A base class for Flask scopes."""
 
-    _store = None
-
-    def __init__(self):
+    def __init__(self, store: object) -> None:
+        self._store = store
         # Both application and request scopes are merely proxies to
         # corresponding storage objects in Flask. This means multiple
         # scope instances will share the same storage object under the
@@ -21,7 +21,7 @@ class _flaskscope(picobox.Scope):
         # distinguish dependencies stored by different scope instances.
         self._uuid = str(uuid.uuid4())
 
-    def set(self, key, value):
+    def set(self, key: t.Hashable, value: t.Any) -> None:
         try:
             dependencies = self._store.__dependencies__
         except AttributeError:
@@ -34,7 +34,7 @@ class _flaskscope(picobox.Scope):
 
         dependencies[key] = value
 
-    def get(self, key):
+    def get(self, key: t.Hashable) -> t.Any:
         try:
             rv = self._store.__dependencies__[self._uuid][key]
         except (AttributeError, KeyError):
@@ -60,9 +60,8 @@ class application(_flaskscope):
     .. versionadded:: 2.2
     """
 
-    @property
-    def _store(self):
-        return flask.current_app
+    def __init__(self) -> None:
+        super().__init__(flask.current_app)
 
 
 class request(_flaskscope):
@@ -78,6 +77,5 @@ class request(_flaskscope):
     .. versionadded:: 2.2
     """
 
-    @property
-    def _store(self):
-        return flask.g
+    def __init__(self) -> None:
+        super().__init__(flask.g)

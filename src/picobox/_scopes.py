@@ -33,8 +33,8 @@ class Scope(metaclass=abc.ABCMeta):
 class singleton(Scope):
     """Share instances across application."""
 
-    def __init__(self):
-        self._store = {}
+    def __init__(self) -> None:
+        self._store: t.Dict[t.Hashable, t.Any] = {}
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
         self._store[key] = value
@@ -46,7 +46,7 @@ class singleton(Scope):
 class threadlocal(Scope):
     """Share instances across the same thread."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._local = threading.local()
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
@@ -76,8 +76,8 @@ class contextvars(Scope):
     .. versionadded:: 2.1
     """
 
-    def __init__(self):
-        self._store = {}
+    def __init__(self) -> None:
+        self._store: t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]] = {}
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
         try:

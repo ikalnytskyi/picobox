@@ -7,6 +7,13 @@ import typing as t
 
 from . import _scopes
 
+if t.TYPE_CHECKING:
+    import typing_extensions
+
+    P = typing_extensions.ParamSpec("P")
+    T = typing_extensions.TypeVar("T")
+    R = t.Union[T, t.Awaitable[T]]
+
 # Missing is a special sentinel object that's used to indicate a value is
 # missing when "None" is a valid input. It's important to use a good name
 # because it appears in function signatures in API reference (see docs).
@@ -40,9 +47,9 @@ class Box:
         assert do() == 43
     """
 
-    def __init__(self):
-        self._store = {}
-        self._scope_instances = {}
+    def __init__(self) -> None:
+        self._store: t.Dict[t.Hashable, t.Tuple[_scopes.Scope, t.Callable[[], t.Any]]] = {}
+        self._scope_instances: t.Dict[t.Type[_scopes.Scope], _scopes.Scope] = {}
         self._lock = threading.RLock()
 
     def put(
@@ -81,6 +88,11 @@ class Box:
         if value is not _unset and scope is not None:
             raise TypeError("Box.put() takes 'scope' when 'factory' provided")
 
+        def _factory() -> t.Any:
+            return value
+
+        factory = factory or _factory
+
         # Value is a syntax sugar Box supports to store objects "As Is"
         # with singleton scope. In other words it's essentially the same
         # as one pass "factory=lambda: value". Alternatively, Box could
@@ -88,11 +100,6 @@ class Box:
         # in this case it wouldn't support values which are callable by
         # its nature.
         if value is not _unset:
-
-            def _factory():
-                return value
-
-            factory = _factory
             scope = _scopes.singleton
 
         # If scope is not explicitly passed, Box assumes "No Scope"
@@ -157,7 +164,12 @@ class Box:
 
         return value
 
-    def pass_(self, key: t.Hashable, *, as_: t.Optional[str] = None):
+    def pass_(
+        self,
+        key: t.Hashable,
+        *,
+        as_: t.Optional[str] = None,
+    ) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -173,7 +185,7 @@ class Box:
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
 
-        def decorator(fn):
+        def decorator(fn: "t.Callable[P, R[T]]") -> "t.Callable[P, R[T]]":
             # If pass_ decorator is called second time (or more), we can squash
             # the calls into one and reduce runtime costs of injection.
             if hasattr(fn, "__dependencies__"):
@@ -181,7 +193,7 @@ class Box:
                 return fn
 
             @functools.wraps(fn)
-            def fn_with_dependencies(*args, **kwargs):
+            def fn_with_dependencies(*args: "P.args", **kwargs: "P.kwargs") -> "R[T]":
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
@@ -200,10 +212,10 @@ class Box:
             if inspect.iscoroutinefunction(fn):
 
                 @functools.wraps(fn)
-                async def wrapper(*args, **kwargs):
-                    return await fn_with_dependencies(*args, **kwargs)
+                async def wrapper(*args: "P.args", **kwargs: "P.kwargs") -> "T":
+                    return await t.cast(t.Awaitable["T"], fn_with_dependencies(*args, **kwargs))
             else:
-                wrapper = fn_with_dependencies
+                wrapper = fn_with_dependencies  # type: ignore[assignment]
 
             wrapper.__dependencies__ = [(key, as_)]
             return wrapper
@@ -244,7 +256,7 @@ class ChainBox(Box):
     .. versionadded:: 1.1
     """
 
-    def __init__(self, *boxes: Box):
+    def __init__(self, *boxes: Box) -> None:
         self._boxes = boxes or (Box(),)
 
     def put(
