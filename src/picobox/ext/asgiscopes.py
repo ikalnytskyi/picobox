@@ -6,8 +6,12 @@ import weakref
 
 import picobox
 
-_current_app_store = contextvars.ContextVar(f"{__name__}.current-app-store")
-_current_req_store = contextvars.ContextVar(f"{__name__}.current-req-store")
+if t.TYPE_CHECKING:
+    Store = contextvars.ContextVar[weakref.WeakKeyDictionary]
+
+
+_current_app_store: "Store" = contextvars.ContextVar(f"{__name__}.current-app-store")
+_current_req_store: "Store" = contextvars.ContextVar(f"{__name__}.current-req-store")
 
 
 class ScopeMiddleware:
@@ -52,7 +56,7 @@ class ScopeMiddleware:
 class _asgiscope(picobox.Scope):
     """A base class for ASGI scopes."""
 
-    _store_cvar: contextvars.ContextVar
+    _store_cvar: "Store"
 
     @property
     def _store(self) -> t.MutableMapping[t.Hashable, t.Any]:

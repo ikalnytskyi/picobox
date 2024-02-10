@@ -100,7 +100,6 @@ disable_error_code = [
   "comparison-overlap",
   "import-not-found",
   "misc",
-  "no-any-return",
   "no-untyped-call",
   "no-untyped-def",
   "type-arg",

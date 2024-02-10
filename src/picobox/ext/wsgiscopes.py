@@ -9,9 +9,11 @@ import picobox
 if t.TYPE_CHECKING:
     from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
+    Store = contextvars.ContextVar[weakref.WeakKeyDictionary]
 
-_current_app_store = contextvars.ContextVar(f"{__name__}.current-app-store")
-_current_req_store = contextvars.ContextVar(f"{__name__}.current-req-store")
+
+_current_app_store: "Store" = contextvars.ContextVar(f"{__name__}.current-app-store")
+_current_req_store: "Store" = contextvars.ContextVar(f"{__name__}.current-req-store")
 
 
 class ScopeMiddleware:
@@ -61,7 +63,7 @@ class ScopeMiddleware:
 class _wsgiscope(picobox.Scope):
     """A base class for WSGI scopes."""
 
-    _store_cvar: contextvars.ContextVar
+    _store_cvar: "Store"
 
     @property
     def _store(self) -> t.MutableMapping[t.Hashable, t.Any]:
