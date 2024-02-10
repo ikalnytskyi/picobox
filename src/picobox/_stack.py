@@ -96,8 +96,8 @@ class Stack:
     """
 
     def __init__(self, name: t.Optional[str] = None):
-        self._name = name
-        self._stack = []
+        self._name = name or "0x%x" % id(self)
+        self._stack: list[Box] = []
         self._lock = threading.Lock()
 
         # A proxy object that proxies all calls to a box instance on the top
@@ -108,10 +108,7 @@ class Stack:
         self._topbox = _create_stack_proxy(self._stack)
 
     def __repr__(self):
-        name = self._name
-        if not self._name:
-            name = "0x%x" % id(self)
-        return "<Stack (%s)>" % name
+        return f"<Stack ({self._name})>"
 
     def push(self, box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
         """Push a :class:`Box` instance to the top of the stack.
