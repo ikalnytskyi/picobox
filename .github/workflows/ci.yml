@@ -40,6 +40,20 @@ jobs:
       - name: Run pytest
         run: pipx run -- hatch run test:run
 
+  type:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Run lints
+        run: pipx run -- hatch run type:run
+
   docs:
     runs-on: ubuntu-latest
     steps:

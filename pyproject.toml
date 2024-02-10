@@ -43,6 +43,10 @@ detached = true
 dependencies = ["ruff == 0.2.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
+[tool.hatch.envs.type]
+dependencies = ["mypy"]
+scripts.run = ["mypy {args}"]
+
 [tool.hatch.envs.docs]
 pre-install-commands = ["python -m pip install -r docs/requirements.txt"]
 scripts.run = "sphinx-build -W -b html docs docs/_build/"
@@ -84,3 +88,21 @@ known-first-party = ["picobox"]
 [tool.ruff.lint.per-file-ignores]
 "examples/*" = ["I", "D", "T20"]
 "tests/*" = ["D"]
+
+[tool.mypy]
+python_version = "3.8"
+files = ["src"]
+pretty = true
+strict = true
+disable_error_code = [
+  "assignment",
+  "attr-defined",
+  "comparison-overlap",
+  "import-not-found",
+  "misc",
+  "no-any-return",
+  "no-untyped-call",
+  "no-untyped-def",
+  "type-arg",
+  "var-annotated",
+]
