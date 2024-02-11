@@ -102,6 +102,4 @@ disable_error_code = [
   "misc",
   "no-untyped-call",
   "no-untyped-def",
-  "type-arg",
-  "var-annotated",
 ]

@@ -7,11 +7,12 @@ import weakref
 import picobox
 
 if t.TYPE_CHECKING:
-    Store = contextvars.ContextVar[weakref.WeakKeyDictionary]
+    Store = weakref.WeakKeyDictionary[picobox.Scope, t.MutableMapping[t.Hashable, t.Any]]
+    StoreCtxVar = contextvars.ContextVar[Store]
 
 
-_current_app_store: "Store" = contextvars.ContextVar(f"{__name__}.current-app-store")
-_current_req_store: "Store" = contextvars.ContextVar(f"{__name__}.current-req-store")
+_current_app_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-app-store")
+_current_req_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-req-store")
 
 
 class ScopeMiddleware:
@@ -34,7 +35,7 @@ class ScopeMiddleware:
         # Since we want stored objects to be garbage collected as soon as the
         # storing scope instance is destroyed, scope instances have to be
         # weakly referenced.
-        self.store = weakref.WeakKeyDictionary()
+        self.store: "Store" = weakref.WeakKeyDictionary()
 
     async def __call__(self, scope, receive, send):
         """Define scopes and invoke the ASGI application."""
@@ -56,7 +57,7 @@ class ScopeMiddleware:
 class _asgiscope(picobox.Scope):
     """A base class for ASGI scopes."""
 
-    _store_cvar: "Store"
+    _store_cvar: "StoreCtxVar"
 
     @property
     def _store(self) -> t.MutableMapping[t.Hashable, t.Any]:
@@ -72,10 +73,10 @@ class _asgiscope(picobox.Scope):
             )
 
         try:
-            store = store[self]
+            scope_store = store[self]
         except KeyError:
-            store = store.setdefault(self, {})
-        return store
+            scope_store = store.setdefault(self, {})
+        return scope_store
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
         self._store[key] = value
