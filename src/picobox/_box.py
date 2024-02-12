@@ -7,17 +7,10 @@ import typing as t
 
 from . import _scopes
 
-
 # Missing is a special sentinel object that's used to indicate a value is
-# missing when "None" is a valid input. It's important to define a human
-# readable "__repr__" because its value is used in function signatures in
-# API reference (see docs).
-class _unset:
-    def __repr__(self):
-        return "<unset>"
-
-
-_unset = _unset()
+# missing when "None" is a valid input. It's important to use a good name
+# because it appears in function signatures in API reference (see docs).
+_unset = object()
 
 
 class Box:
@@ -57,8 +50,8 @@ class Box:
         key: t.Hashable,
         value: t.Any = _unset,
         *,
-        factory: t.Callable[[], t.Any] = _unset,
-        scope: t.Type[_scopes.Scope] = _unset,
+        factory: t.Optional[t.Callable[[], t.Any]] = None,
+        scope: t.Optional[t.Type[_scopes.Scope]] = None,
     ) -> None:
         """Define a dependency (aka service) within the box instance.
 
@@ -79,13 +72,13 @@ class Box:
             a class that implements :class:`Scope` interface.
         :raises ValueError: If both `value` and `factory` are passed.
         """
-        if value is _unset and factory is _unset:
+        if value is _unset and factory is None:
             raise TypeError("Box.put() missing 1 required argument: either 'value' or 'factory'")
 
-        if value is not _unset and factory is not _unset:
+        if value is not _unset and factory is not None:
             raise TypeError("Box.put() takes either 'value' or 'factory', not both")
 
-        if value is not _unset and scope is not _unset:
+        if value is not _unset and scope is not None:
             raise TypeError("Box.put() takes 'scope' when 'factory' provided")
 
         # Value is a syntax sugar Box supports to store objects "As Is"
@@ -96,15 +89,16 @@ class Box:
         # its nature.
         if value is not _unset:
 
-            def factory():
+            def _factory():
                 return value
 
+            factory = _factory
             scope = _scopes.singleton
 
         # If scope is not explicitly passed, Box assumes "No Scope"
         # scope which means each time someone asks a box to retrieve a
         # value it would use a factory function.
-        elif scope is _unset:
+        elif scope is None:
             scope = _scopes.noscope
 
         # Convert a given scope class into a scope instance. Since key
@@ -113,15 +107,15 @@ class Box:
         # memory consumption when a lot of objects with the same scope
         # are put into a box.
         try:
-            scope = self._scope_instances[scope]
+            scope_instance = self._scope_instances[scope]
         except KeyError:
-            scope = self._scope_instances.setdefault(scope, scope())
+            scope_instance = self._scope_instances.setdefault(scope, scope())
 
         # Despite "dict" is thread-safe in CPython (due to GIL), it's not
         # guaranteed by the language itself and may not be the case among
         # alternative implementations.
         with self._lock:
-            self._store[key] = (scope, factory)
+            self._store[key] = (scope_instance, factory)
 
     def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
         """Retrieve a dependency (aka service) out of the box instance.
@@ -163,7 +157,7 @@ class Box:
 
         return value
 
-    def pass_(self, key: t.Hashable, *, as_: str = _unset):
+    def pass_(self, key: t.Hashable, *, as_: t.Optional[str] = None):
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -192,7 +186,7 @@ class Box:
                 arguments = signature.bind_partial(*args, **kwargs)
 
                 for key, as_ in wrapper.__dependencies__:
-                    if as_ is _unset:
+                    if as_ is None:
                         as_ = key
 
                     # One of picobox core principles is to supply dependencies
@@ -258,8 +252,8 @@ class ChainBox(Box):
         key: t.Hashable,
         value: t.Any = _unset,
         *,
-        factory: t.Callable[[], t.Any] = _unset,
-        scope: t.Type[_scopes.Scope] = _unset,
+        factory: t.Optional[t.Callable[[], t.Any]] = None,
+        scope: t.Optional[t.Type[_scopes.Scope]] = None,
     ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
         return self._boxes[0].put(key, value, factory=factory, scope=scope)

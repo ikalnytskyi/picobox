@@ -97,7 +97,7 @@ class Stack:
 
     def __init__(self, name: t.Optional[str] = None):
         self._name = name or "0x%x" % id(self)
-        self._stack: list[Box] = []
+        self._stack: t.List[Box] = []
         self._lock = threading.Lock()
 
         # A proxy object that proxies all calls to a box instance on the top
