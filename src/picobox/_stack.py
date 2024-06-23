@@ -96,7 +96,7 @@ class Stack:
     """
 
     def __init__(self, name: t.Optional[str] = None):
-        self._name = name or "0x%x" % id(self)
+        self._name = name or f"0x{id(t):x}"
         self._stack: t.List[Box] = []
         self._lock = threading.Lock()
 

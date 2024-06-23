@@ -37,7 +37,7 @@ class ScopeMiddleware:
         # Since we want stored objects to be garbage collected as soon as the
         # storing scope instance is destroyed, scope instances have to be
         # weakly referenced.
-        self.store: "Store" = weakref.WeakKeyDictionary()
+        self.store: Store = weakref.WeakKeyDictionary()
 
     def __call__(
         self,
