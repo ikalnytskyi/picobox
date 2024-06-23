@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Run lints
-        run: pipx run -- hatch run lint:run
+        run: python3 -m pip install hatch && hatch run lint:run
 
   test:
     strategy:
@@ -38,7 +38,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run pytest
-        run: pipx run -- hatch run test:run
+        run: python3 -m pip install hatch && hatch run test:run
 
   type:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
           python-version: "3.12"
 
       - name: Run lints
-        run: pipx run -- hatch run type:run
+        run: python3 -m pip install hatch && hatch run type:run
 
   docs:
     runs-on: ubuntu-latest
@@ -66,4 +66,4 @@ jobs:
           python-version: "3.12"
 
       - name: Run sphinx
-        run: pipx run -- hatch run docs:run
+        run: python3 -m pip install hatch && hatch run docs:run
