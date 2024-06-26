@@ -44,7 +44,7 @@ dependencies = ["ruff == 0.4.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.type]
-dependencies = ["mypy", "flask"]
+dependencies = ["mypy", "typing-extensions", "flask"]
 scripts.run = ["mypy {args}"]
 
 [tool.hatch.envs.docs]
@@ -97,6 +97,4 @@ strict = true
 disable_error_code = [
   "attr-defined",
   "comparison-overlap",
-  "no-untyped-call",
-  "no-untyped-def",
 ]

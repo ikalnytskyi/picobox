@@ -1,54 +1,54 @@
 """Picobox API to work with a box at the top of the stack."""
 
 import contextlib
-import functools
 import threading
 import typing as t
 
-from ._box import Box, ChainBox
+from . import _scopes
+from ._box import Box, ChainBox, _unset
+
+if t.TYPE_CHECKING:
+    import typing_extensions
+
+    P = typing_extensions.ParamSpec("P")
+    T = typing_extensions.TypeVar("T")
+    R = t.Union[T, t.Awaitable[T]]
 
 _ERROR_MESSAGE_EMPTY_STACK = "No boxes found on the stack, please `.push()` a box first."
 
 
-def _copy_signature(method, instance=None):
-    # This is a workaround to overcome 'sphinx.ext.autodoc' inability to
-    # retrieve a docstring of a bound method. Here's the trick - we create
-    # a partial function, and autodoc can deal with partially applied
-    # functions.
-    if instance:
-        method = functools.partial(method, instance)
-
-    # The reason behind empty arguments is to reuse a signature of wrapped
-    # function while preserving "__doc__", "__name__" and other accompanied
-    # attributes. They are very helpful for troubleshooting as well as
-    # necessary for Sphinx API reference.
-    return functools.wraps(method, (), ())
-
-
-def _create_stack_proxy(stack):
-    """Create an object that proxies all calls to the top of the stack."""
-
-    class _StackProxy:
-        def __getattribute__(self, name):
-            try:
-                return getattr(stack[-1], name)
-            except IndexError:
-                raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
-
-    return _StackProxy()
-
-
 @contextlib.contextmanager
-def _create_push_context_manager(box, pop_callback):
+def _create_push_context_manager(
+    box: Box,
+    pop_callback: t.Callable[[], Box],
+) -> t.Generator[Box, None, None]:
     """Create a context manager that calls something on exit."""
     try:
         yield box
     finally:
+        popped_box = pop_callback()
+
         # Ensure the poped box is the same that was submitted by this exact
         # context manager. It may happen if someone messed up with order of
-        # push() and pop() calls. Normally, push() should be used a context
+        # push() and pop() calls. Normally, push() should be used as a context
         # manager to avoid this issue.
-        assert pop_callback() is box
+        assert popped_box is box
+
+
+class _CurrentBoxProxy(Box):
+    """Delegates operations to the Box instance at the top of the stack."""
+
+    def __init__(self, stack: t.List[Box]) -> None:
+        self._stack = stack
+
+    def __getattribute__(self, name: str) -> t.Any:
+        if name == "_stack":
+            return super().__getattribute__(name)
+
+        try:
+            return getattr(self._stack[-1], name)
+        except IndexError:
+            raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
 
 
 class Stack:
@@ -95,7 +95,7 @@ class Stack:
     .. versionadded:: 2.2
     """
 
-    def __init__(self, name: t.Optional[str] = None):
+    def __init__(self, name: t.Optional[str] = None) -> None:
         self._name = name or f"0x{id(t):x}"
         self._stack: t.List[Box] = []
         self._lock = threading.Lock()
@@ -105,9 +105,9 @@ class Stack:
         # that mimic Box interface but deal with a box on the top instead.
         # While it's not completely necessary for `put()` and `get()`, it's
         # crucial for `pass_()` due to its laziness and thus late evaluation.
-        self._topbox = _create_stack_proxy(self._stack)
+        self._current_box = _CurrentBoxProxy(self._stack)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Stack ({self._name})>"
 
     def push(self, box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
@@ -159,56 +159,70 @@ class Stack:
             except IndexError:
                 raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
 
-    @_copy_signature(Box.put)
-    def put(self, *args, **kwargs):
-        """The same as :meth:`Box.put` but for a box at the top."""
-        return self._topbox.put(*args, **kwargs)
+    def put(
+        self,
+        key: t.Hashable,
+        value: t.Any = _unset,
+        *,
+        factory: t.Optional[t.Callable[[], t.Any]] = None,
+        scope: t.Optional[t.Type[_scopes.Scope]] = None,
+    ) -> None:
+        """The same as :meth:`Box.put` but for a box at the top of the stack."""
+        return self._current_box.put(key, value, factory=factory, scope=scope)
 
-    @_copy_signature(Box.get)
-    def get(self, *args, **kwargs):
+    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
         """The same as :meth:`Box.get` but for a box at the top."""
-        return self._topbox.get(*args, **kwargs)
+        return self._current_box.get(key, default=default)
 
-    @_copy_signature(Box.pass_)
-    def pass_(self, *args, **kwargs):
+    def pass_(
+        self,
+        key: t.Hashable,
+        *,
+        as_: t.Optional[str] = None,
+    ) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
         """The same as :meth:`Box.pass_` but for a box at the top."""
-        return Box.pass_(self._topbox, *args, **kwargs)
+        return Box.pass_(self._current_box, key, as_=as_)
 
 
 _instance = Stack("shared")
 
 
-@_copy_signature(Stack.push, _instance)
-def push(*args, **kwargs):
+def push(box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
     """The same as :meth:`Stack.push` but for a shared stack instance.
 
     .. versionadded:: 1.1 ``chain`` parameter
     """
-    return _instance.push(*args, **kwargs)
+    return _instance.push(box, chain=chain)
 
 
-@_copy_signature(Stack.pop, _instance)
-def pop(*args, **kwargs):
+def pop() -> Box:
     """The same as :meth:`Stack.pop` but for a shared stack instance.
 
     .. versionadded:: 2.0
     """
-    return _instance.pop(*args, **kwargs)
+    return _instance.pop()
 
 
-@_copy_signature(Stack.put, _instance)
-def put(*args, **kwargs):
+def put(
+    key: t.Hashable,
+    value: t.Any = _unset,
+    *,
+    factory: t.Optional[t.Callable[[], t.Any]] = None,
+    scope: t.Optional[t.Type[_scopes.Scope]] = None,
+) -> None:
     """The same as :meth:`Stack.put` but for a shared stack instance."""
-    return _instance.put(*args, **kwargs)
+    return _instance.put(key, value, factory=factory, scope=scope)
 
 
-@_copy_signature(Stack.get, _instance)
-def get(*args, **kwargs):
+def get(key: t.Hashable, default: t.Any = _unset) -> t.Any:
     """The same as :meth:`Stack.get` but for a shared stack instance."""
-    return _instance.get(*args, **kwargs)
+    return _instance.get(key, default=default)
 
 
-@_copy_signature(Stack.pass_, _instance)
-def pass_(*args, **kwargs):
+def pass_(
+    key: t.Hashable,
+    *,
+    as_: t.Optional[str] = None,
+) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
     """The same as :meth:`Stack.pass_` but for a shared stack instance."""
-    return _instance.pass_(*args, **kwargs)
+    return _instance.pass_(key, as_=as_)

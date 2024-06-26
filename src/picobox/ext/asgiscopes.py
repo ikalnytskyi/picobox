@@ -9,6 +9,11 @@ import picobox
 if t.TYPE_CHECKING:
     Store = weakref.WeakKeyDictionary[picobox.Scope, t.MutableMapping[t.Hashable, t.Any]]
     StoreCtxVar = contextvars.ContextVar[Store]
+    ASGIScope = t.MutableMapping[str, t.Any]
+    ASGIMessage = t.MutableMapping[str, t.Any]
+    ASGIReceive = t.Callable[[], t.Awaitable[ASGIMessage]]
+    ASGISend = t.Callable[[ASGIMessage], t.Awaitable[None]]
+    ASGIApplication = t.Callable[[ASGIScope, ASGIReceive, ASGISend], t.Awaitable[None]]
 
 
 _current_app_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-app-store")
@@ -30,14 +35,14 @@ class ScopeMiddleware:
     :param app: The ASGI application to wrap.
     """
 
-    def __init__(self, app):
+    def __init__(self, app: "ASGIApplication") -> None:
         self.app = app
         # Since we want stored objects to be garbage collected as soon as the
         # storing scope instance is destroyed, scope instances have to be
         # weakly referenced.
         self.store: Store = weakref.WeakKeyDictionary()
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: "ASGIScope", receive: "ASGIReceive", send: "ASGISend") -> None:
         """Define scopes and invoke the ASGI application."""
         # Storing the ASGI application's scope state within a ScopeMiddleware
         # instance because it's assumed that each ASGI middleware is typically
