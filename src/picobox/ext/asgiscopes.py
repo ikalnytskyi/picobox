@@ -7,7 +7,7 @@ import weakref
 import picobox
 
 if t.TYPE_CHECKING:
-    Store = weakref.WeakKeyDictionary[picobox.Scope, t.MutableMapping[t.Hashable, t.Any]]
+    Store = weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
     StoreCtxVar = contextvars.ContextVar[Store]
     ASGIScope = t.MutableMapping[str, t.Any]
     ASGIMessage = t.MutableMapping[str, t.Any]
@@ -65,7 +65,7 @@ class _asgiscope(picobox.Scope):
     _store_cvar: "StoreCtxVar"
 
     @property
-    def _store(self) -> t.MutableMapping[t.Hashable, t.Any]:
+    def _store(self) -> t.Dict[t.Hashable, t.Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:

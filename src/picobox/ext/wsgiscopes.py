@@ -9,7 +9,7 @@ import picobox
 if t.TYPE_CHECKING:
     from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
-    Store = weakref.WeakKeyDictionary[picobox.Scope, t.MutableMapping[t.Hashable, t.Any]]
+    Store = weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
     StoreCtxVar = contextvars.ContextVar[Store]
 
 
@@ -67,7 +67,7 @@ class _wsgiscope(picobox.Scope):
     _store_cvar: "StoreCtxVar"
 
     @property
-    def _store(self) -> t.MutableMapping[t.Hashable, t.Any]:
+    def _store(self) -> t.Dict[t.Hashable, t.Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:
