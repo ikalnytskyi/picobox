@@ -1,49 +1,42 @@
 """Scopes for Flask framework."""
 
 import typing as t
-import uuid
+import weakref
 
 import flask
 
 import picobox
 
+if t.TYPE_CHECKING:
 
-class _Store(t.Protocol):
-    __dependencies__: t.Dict[str, t.Dict[t.Hashable, t.Any]]
+    class _flask_store_obj(t.Protocol):
+        __dependencies__: weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
 
 
 class _flaskscope(picobox.Scope):
     """A base class for Flask scopes."""
 
-    def __init__(self, store: object) -> None:
-        self._store = t.cast(_Store, store)
-        # Both application and request scopes are merely proxies to
-        # corresponding storage objects in Flask. This means multiple
-        # scope instances will share the same storage object under the
-        # hood, and this is not what we want. So we need to generate
-        # some unique key per scope instance and use that key to
-        # distinguish dependencies stored by different scope instances.
-        self._uuid = str(uuid.uuid4())
+    def __init__(self, store_obj: object) -> None:
+        self._store_obj = t.cast("_flask_store_obj", store_obj)
+
+    @property
+    def _store(self) -> t.Dict[t.Hashable, t.Any]:
+        try:
+            store = self._store_obj.__dependencies__
+        except AttributeError:
+            store = self._store_obj.__dependencies__ = weakref.WeakKeyDictionary()
+
+        try:
+            scope_store = store[self]
+        except KeyError:
+            scope_store = store.setdefault(self, {})
+        return scope_store
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
-        try:
-            store = self._store.__dependencies__
-        except AttributeError:
-            store = self._store.__dependencies__ = {}
-
-        try:
-            scope_store = store[self._uuid]
-        except KeyError:
-            scope_store = store.setdefault(self._uuid, {})
-
-        scope_store[key] = value
+        self._store[key] = value
 
     def get(self, key: t.Hashable) -> t.Any:
-        try:
-            rv = self._store.__dependencies__[self._uuid][key]
-        except (AttributeError, KeyError):
-            raise KeyError(key)
-        return rv
+        return self._store[key]
 
 
 class application(_flaskscope):
