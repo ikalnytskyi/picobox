@@ -8,11 +8,15 @@ import flask
 import picobox
 
 
+class _Store(t.Protocol):
+    __dependencies__: t.Dict[str, t.Dict[t.Hashable, t.Any]]
+
+
 class _flaskscope(picobox.Scope):
     """A base class for Flask scopes."""
 
     def __init__(self, store: object) -> None:
-        self._store = store
+        self._store = t.cast(_Store, store)
         # Both application and request scopes are merely proxies to
         # corresponding storage objects in Flask. This means multiple
         # scope instances will share the same storage object under the
@@ -23,16 +27,16 @@ class _flaskscope(picobox.Scope):
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
         try:
-            dependencies = self._store.__dependencies__
+            store = self._store.__dependencies__
         except AttributeError:
-            dependencies = self._store.__dependencies__ = {}
+            store = self._store.__dependencies__ = {}
 
         try:
-            dependencies = dependencies[self._uuid]
+            scope_store = store[self._uuid]
         except KeyError:
-            dependencies = dependencies.setdefault(self._uuid, {})
+            scope_store = store.setdefault(self._uuid, {})
 
-        dependencies[key] = value
+        scope_store[key] = value
 
     def get(self, key: t.Hashable) -> t.Any:
         try:

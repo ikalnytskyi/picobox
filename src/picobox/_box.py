@@ -197,7 +197,7 @@ class Box:
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
-                for key, as_ in wrapper.__dependencies__:
+                for key, as_ in wrapper.__dependencies__:  # type: ignore[attr-defined]
                     if as_ is None:
                         as_ = key
 
@@ -217,7 +217,7 @@ class Box:
             else:
                 wrapper = fn_with_dependencies  # type: ignore[assignment]
 
-            wrapper.__dependencies__ = [(key, as_)]
+            wrapper.__dependencies__ = [(key, as_)]  # type: ignore[attr-defined]
             return wrapper
 
         return decorator

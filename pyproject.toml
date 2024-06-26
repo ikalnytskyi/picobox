@@ -94,7 +94,3 @@ python_version = "3.8"
 files = ["src"]
 pretty = true
 strict = true
-disable_error_code = [
-  "attr-defined",
-  "comparison-overlap",
-]
