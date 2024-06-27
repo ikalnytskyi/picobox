@@ -1,5 +1,7 @@
 """Box container."""
 
+from __future__ import annotations
+
 import functools
 import inspect
 import threading
@@ -48,8 +50,8 @@ class Box:
     """
 
     def __init__(self) -> None:
-        self._store: t.Dict[t.Hashable, t.Tuple[_scopes.Scope, t.Callable[[], t.Any]]] = {}
-        self._scope_instances: t.Dict[t.Type[_scopes.Scope], _scopes.Scope] = {}
+        self._store: dict[t.Hashable, tuple[_scopes.Scope, t.Callable[[], t.Any]]] = {}
+        self._scope_instances: dict[type[_scopes.Scope], _scopes.Scope] = {}
         self._lock = threading.RLock()
 
     def put(
@@ -57,8 +59,8 @@ class Box:
         key: t.Hashable,
         value: t.Any = _unset,
         *,
-        factory: t.Optional[t.Callable[[], t.Any]] = None,
-        scope: t.Optional[t.Type[_scopes.Scope]] = None,
+        factory: t.Callable[[], t.Any] | None = None,
+        scope: type[_scopes.Scope] | None = None,
     ) -> None:
         """Define a dependency (aka service) within the box instance.
 
@@ -80,13 +82,16 @@ class Box:
         :raises ValueError: If both `value` and `factory` are passed.
         """
         if value is _unset and factory is None:
-            raise TypeError("Box.put() missing 1 required argument: either 'value' or 'factory'")
+            error_message = "Box.put() missing 1 required argument: either 'value' or 'factory'"
+            raise TypeError(error_message)
 
         if value is not _unset and factory is not None:
-            raise TypeError("Box.put() takes either 'value' or 'factory', not both")
+            error_message = "Box.put() takes either 'value' or 'factory', not both"
+            raise TypeError(error_message)
 
         if value is not _unset and scope is not None:
-            raise TypeError("Box.put() takes 'scope' when 'factory' provided")
+            error_message = "Box.put() takes 'scope' when 'factory' provided"
+            raise TypeError(error_message)
 
         def _factory() -> t.Any:
             return value
@@ -168,8 +173,8 @@ class Box:
         self,
         key: t.Hashable,
         *,
-        as_: t.Optional[str] = None,
-    ) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
+        as_: str | None = None,
+    ) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -185,7 +190,7 @@ class Box:
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
 
-        def decorator(fn: "t.Callable[P, R[T]]") -> "t.Callable[P, R[T]]":
+        def decorator(fn: t.Callable[P, R[T]]) -> t.Callable[P, R[T]]:
             # If pass_ decorator is called second time (or more), we can squash
             # the calls into one and reduce runtime costs of injection.
             if hasattr(fn, "__dependencies__"):
@@ -193,7 +198,7 @@ class Box:
                 return fn
 
             @functools.wraps(fn)
-            def fn_with_dependencies(*args: "P.args", **kwargs: "P.kwargs") -> "R[T]":
+            def fn_with_dependencies(*args: P.args, **kwargs: P.kwargs) -> R[T]:
                 signature = inspect.signature(fn)
                 arguments = signature.bind_partial(*args, **kwargs)
 
@@ -212,7 +217,7 @@ class Box:
             if inspect.iscoroutinefunction(fn):
 
                 @functools.wraps(fn)
-                async def wrapper(*args: "P.args", **kwargs: "P.kwargs") -> "T":
+                async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                     return await t.cast(t.Awaitable["T"], fn_with_dependencies(*args, **kwargs))
             else:
                 wrapper = fn_with_dependencies  # type: ignore[assignment]
@@ -264,8 +269,8 @@ class ChainBox(Box):
         key: t.Hashable,
         value: t.Any = _unset,
         *,
-        factory: t.Optional[t.Callable[[], t.Any]] = None,
-        scope: t.Optional[t.Type[_scopes.Scope]] = None,
+        factory: t.Callable[[], t.Any] | None = None,
+        scope: type[_scopes.Scope] | None = None,
     ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
         return self._boxes[0].put(key, value, factory=factory, scope=scope)

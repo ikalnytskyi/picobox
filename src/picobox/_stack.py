@@ -1,14 +1,17 @@
 """Picobox API to work with a box at the top of the stack."""
 
+from __future__ import annotations
+
 import contextlib
 import threading
 import typing as t
 
-from . import _scopes
 from ._box import Box, ChainBox, _unset
 
 if t.TYPE_CHECKING:
     import typing_extensions
+
+    from ._scopes import Scope
 
     P = typing_extensions.ParamSpec("P")
     T = typing_extensions.TypeVar("T")
@@ -26,19 +29,20 @@ def _create_push_context_manager(
     try:
         yield box
     finally:
-        popped_box = pop_callback()
-
-        # Ensure the poped box is the same that was submitted by this exact
-        # context manager. It may happen if someone messed up with order of
-        # push() and pop() calls. Normally, push() should be used as a context
-        # manager to avoid this issue.
-        assert popped_box is box
+        if pop_callback() is not box:
+            error_message = (
+                "The .push() context manager has popped the wrong Box instance, "
+                "meaning it did not pop the one that was pushed. This could "
+                "occur if the .push() context manager is manipulated manually "
+                "instead of using the 'with' statement."
+            )
+            raise RuntimeError(error_message) from None
 
 
 class _CurrentBoxProxy(Box):
     """Delegates operations to the Box instance at the top of the stack."""
 
-    def __init__(self, stack: t.List[Box]) -> None:
+    def __init__(self, stack: list[Box]) -> None:
         self._stack = stack
 
     def __getattribute__(self, name: str) -> t.Any:
@@ -48,7 +52,7 @@ class _CurrentBoxProxy(Box):
         try:
             return getattr(self._stack[-1], name)
         except IndexError:
-            raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
+            raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK) from None
 
 
 class Stack:
@@ -95,9 +99,9 @@ class Stack:
     .. versionadded:: 2.2
     """
 
-    def __init__(self, name: t.Optional[str] = None) -> None:
+    def __init__(self, name: str | None = None) -> None:
         self._name = name or f"0x{id(t):x}"
-        self._stack: t.List[Box] = []
+        self._stack: list[Box] = []
         self._lock = threading.Lock()
 
         # A proxy object that proxies all calls to a box instance on the top
@@ -157,15 +161,15 @@ class Stack:
             try:
                 return self._stack.pop()
             except IndexError:
-                raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK)
+                raise RuntimeError(_ERROR_MESSAGE_EMPTY_STACK) from None
 
     def put(
         self,
         key: t.Hashable,
         value: t.Any = _unset,
         *,
-        factory: t.Optional[t.Callable[[], t.Any]] = None,
-        scope: t.Optional[t.Type[_scopes.Scope]] = None,
+        factory: t.Callable[[], t.Any] | None = None,
+        scope: type[Scope] | None = None,
     ) -> None:
         """The same as :meth:`Box.put` but for a box at the top of the stack."""
         return self._current_box.put(key, value, factory=factory, scope=scope)
@@ -178,8 +182,8 @@ class Stack:
         self,
         key: t.Hashable,
         *,
-        as_: t.Optional[str] = None,
-    ) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
+        as_: str | None = None,
+    ) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
         """The same as :meth:`Box.pass_` but for a box at the top."""
         return Box.pass_(self._current_box, key, as_=as_)
 
@@ -207,8 +211,8 @@ def put(
     key: t.Hashable,
     value: t.Any = _unset,
     *,
-    factory: t.Optional[t.Callable[[], t.Any]] = None,
-    scope: t.Optional[t.Type[_scopes.Scope]] = None,
+    factory: t.Callable[[], t.Any] | None = None,
+    scope: type[Scope] | None = None,
 ) -> None:
     """The same as :meth:`Stack.put` but for a shared stack instance."""
     return _instance.put(key, value, factory=factory, scope=scope)
@@ -222,7 +226,7 @@ def get(key: t.Hashable, default: t.Any = _unset) -> t.Any:
 def pass_(
     key: t.Hashable,
     *,
-    as_: t.Optional[str] = None,
-) -> "t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]":
+    as_: str | None = None,
+) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
     """The same as :meth:`Stack.pass_` but for a shared stack instance."""
     return _instance.pass_(key, as_=as_)

@@ -1,5 +1,7 @@
 """Scopes for Flask framework."""
 
+from __future__ import annotations
+
 import typing as t
 import weakref
 
@@ -10,7 +12,7 @@ import picobox
 if t.TYPE_CHECKING:
 
     class _flask_store_obj(t.Protocol):
-        __dependencies__: weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
+        __dependencies__: weakref.WeakKeyDictionary[picobox.Scope, dict[t.Hashable, t.Any]]
 
 
 class _flaskscope(picobox.Scope):
@@ -20,7 +22,7 @@ class _flaskscope(picobox.Scope):
         self._store_obj = t.cast("_flask_store_obj", store_obj)
 
     @property
-    def _store(self) -> t.Dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[t.Hashable, t.Any]:
         try:
             store = self._store_obj.__dependencies__
         except AttributeError:

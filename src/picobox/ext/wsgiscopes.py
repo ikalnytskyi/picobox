@@ -1,5 +1,7 @@
 """Scopes for WSGI applications."""
 
+from __future__ import annotations
+
 import contextvars
 import typing as t
 import weakref
@@ -13,8 +15,8 @@ if t.TYPE_CHECKING:
     StoreCtxVar = contextvars.ContextVar[Store]
 
 
-_current_app_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-app-store")
-_current_req_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-req-store")
+_current_app_store: StoreCtxVar = contextvars.ContextVar(f"{__name__}.current-app-store")
+_current_req_store: StoreCtxVar = contextvars.ContextVar(f"{__name__}.current-req-store")
 
 
 class ScopeMiddleware:
@@ -32,7 +34,7 @@ class ScopeMiddleware:
     :param app: The WSGI application to wrap.
     """
 
-    def __init__(self, app: "WSGIApplication") -> None:
+    def __init__(self, app: WSGIApplication) -> None:
         self.app = app
         # Since we want stored objects to be garbage collected as soon as the
         # storing scope instance is destroyed, scope instances have to be
@@ -41,8 +43,8 @@ class ScopeMiddleware:
 
     def __call__(
         self,
-        environ: "WSGIEnvironment",
-        start_response: "StartResponse",
+        environ: WSGIEnvironment,
+        start_response: StartResponse,
     ) -> t.Iterable[bytes]:
         """Define scopes and invoke the WSGI application."""
         # Storing the WSGI application's scope state within a ScopeMiddleware
@@ -64,20 +66,21 @@ class ScopeMiddleware:
 class _wsgiscope(picobox.Scope):
     """A base class for WSGI scopes."""
 
-    _store_cvar: "StoreCtxVar"
+    _store_cvar: StoreCtxVar
 
     @property
-    def _store(self) -> t.Dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[t.Hashable, t.Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:
-            raise RuntimeError(
+            error_message = (
                 "Working outside of WSGI context.\n"
                 "\n"
                 "This typically means that you attempted to use picobox with "
                 "WSGI scopes, but 'picobox.ext.wsgiscopes.ScopeMiddleware' has "
                 "not been used with your WSGI application."
             )
+            raise RuntimeError(error_message) from None
 
         try:
             scope_store = store[self]

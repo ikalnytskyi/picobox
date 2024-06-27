@@ -1,5 +1,7 @@
 """Scope interface and builtin implementations."""
 
+from __future__ import annotations
+
 import abc
 import contextvars as _contextvars
 import threading
@@ -35,7 +37,7 @@ class singleton(Scope):
     """Share instances across application."""
 
     def __init__(self) -> None:
-        self._store: t.Dict[t.Hashable, t.Any] = {}
+        self._store: dict[t.Hashable, t.Any] = {}
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
         self._store[key] = value
@@ -61,7 +63,7 @@ class threadlocal(Scope):
         try:
             rv = self._local.store[key]
         except AttributeError:
-            raise KeyError(key)
+            raise KeyError(key) from None
         return rv
 
 
@@ -77,13 +79,11 @@ class contextvars(Scope):
     .. versionadded:: 2.1
     """
 
-    _store_obj: (
-        "weakref.WeakKeyDictionary[Scope, t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]]]"
-    )
+    _store_obj: weakref.WeakKeyDictionary[Scope, dict[t.Hashable, _contextvars.ContextVar[t.Any]]]
     _store_obj = weakref.WeakKeyDictionary()
 
     @property
-    def _store(self) -> t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]]:
+    def _store(self) -> dict[t.Hashable, _contextvars.ContextVar[t.Any]]:
         try:
             scope_store = self._store_obj[self]
         except KeyError:
@@ -98,7 +98,7 @@ class contextvars(Scope):
         try:
             return self._store[key].get()
         except LookupError:
-            raise KeyError(key)
+            raise KeyError(key) from None
 
 
 class noscope(Scope):

@@ -207,7 +207,7 @@ def test_scope_value_shared(app_factory, client_factory, scope_factory):
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
-        )
+        ),
     )
     client.run_endpoint("/1")
     client.run_endpoint("/2")
@@ -235,7 +235,7 @@ def test_scope_value_not_shared(app_factory, client_factory, scope_factory):
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
-        )
+        ),
     )
     client.run_endpoint("/1")
     client.run_endpoint("/2")
@@ -389,7 +389,7 @@ def test_scope_request_is_request_bound(app_factory, client_factory):
         app_factory(
             ("/1", endpoint1),
             ("/2", endpoint2),
-        )
+        ),
     )
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:

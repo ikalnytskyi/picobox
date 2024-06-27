@@ -79,7 +79,7 @@ def test_stack_put_factory_custom_scope(boxclass, teststack):
             [
                 teststack.get("the-key"),
                 teststack.get("the-key"),
-            ]
+            ],
         )
 
         namespace = "two"
@@ -87,7 +87,7 @@ def test_stack_put_factory_custom_scope(boxclass, teststack):
             [
                 teststack.get("the-key"),
                 teststack.get("the-key"),
-            ]
+            ],
         )
 
         assert len(objects) == 4
@@ -588,7 +588,7 @@ def test_stack_pass_optimization(request, boxclass, teststack):
             itertools.dropwhile(
                 lambda frame: frame[2] != request.function.__name__,
                 traceback.extract_stack(),
-            )
+            ),
         )
         return backtrace[1:-1]
 
@@ -619,7 +619,7 @@ def test_stack_pass_optimization_complex(request, boxclass, teststack):
             itertools.dropwhile(
                 lambda frame: frame[2] != request.function.__name__,
                 traceback.extract_stack(),
-            )
+            ),
         )
         return backtrace[1:-1]
 
@@ -642,7 +642,7 @@ async def test_stack_pass_optimization_async(request, boxclass, teststack):
             itertools.dropwhile(
                 lambda frame: frame[2] != request.function.__name__,
                 traceback.extract_stack(),
-            )
+            ),
         )
         return backtrace[1:-1]
 
