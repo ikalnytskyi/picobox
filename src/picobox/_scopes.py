@@ -5,8 +5,12 @@ from __future__ import annotations
 import abc
 import contextvars as _contextvars
 import threading
-import typing as t
+import typing
 import weakref
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Hashable
+    from typing import Any
 
 
 class Scope(metaclass=abc.ABCMeta):
@@ -25,11 +29,11 @@ class Scope(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         """Bind `value` to `key` in current execution context."""
 
     @abc.abstractmethod
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         """Get `value` by `key` for current execution context."""
 
 
@@ -37,12 +41,12 @@ class singleton(Scope):
     """Share instances across application."""
 
     def __init__(self) -> None:
-        self._store: dict[t.Hashable, t.Any] = {}
+        self._store: dict[Hashable, Any] = {}
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         self._store[key] = value
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         return self._store[key]
 
 
@@ -52,14 +56,14 @@ class threadlocal(Scope):
     def __init__(self) -> None:
         self._local = threading.local()
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         try:
             store = self._local.store
         except AttributeError:
             store = self._local.store = {}
         store[key] = value
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         try:
             rv = self._local.store[key]
         except AttributeError:
@@ -79,22 +83,22 @@ class contextvars(Scope):
     .. versionadded:: 2.1
     """
 
-    _store_obj: weakref.WeakKeyDictionary[Scope, dict[t.Hashable, _contextvars.ContextVar[t.Any]]]
+    _store_obj: weakref.WeakKeyDictionary[Scope, dict[Hashable, _contextvars.ContextVar[Any]]]
     _store_obj = weakref.WeakKeyDictionary()
 
     @property
-    def _store(self) -> dict[t.Hashable, _contextvars.ContextVar[t.Any]]:
+    def _store(self) -> dict[Hashable, _contextvars.ContextVar[Any]]:
         try:
             scope_store = self._store_obj[self]
         except KeyError:
             scope_store = self._store_obj[self] = {}
         return scope_store
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         self._store[key] = _contextvars.ContextVar(str(key))
         self._store[key].set(value)
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         try:
             return self._store[key].get()
         except LookupError:
@@ -104,8 +108,8 @@ class contextvars(Scope):
 class noscope(Scope):
     """Do not share instances, create them each time on demand."""
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         pass
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         raise KeyError(key)

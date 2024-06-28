@@ -4,18 +4,20 @@ from __future__ import annotations
 
 import contextlib
 import threading
-import typing as t
+import typing
 
 from ._box import Box, ChainBox, _unset
 
-if t.TYPE_CHECKING:
-    import typing_extensions
+if typing.TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Generator, Hashable
+    from contextlib import AbstractContextManager
+    from typing import Any, ParamSpec, TypeVar, Union
 
     from ._scopes import Scope
 
-    P = typing_extensions.ParamSpec("P")
-    T = typing_extensions.TypeVar("T")
-    R = t.Union[T, t.Awaitable[T]]
+    P = ParamSpec("P")
+    T = TypeVar("T")
+    R = Union[T | Awaitable[T]]
 
 _ERROR_MESSAGE_EMPTY_STACK = "No boxes found on the stack, please `.push()` a box first."
 
@@ -23,8 +25,8 @@ _ERROR_MESSAGE_EMPTY_STACK = "No boxes found on the stack, please `.push()` a bo
 @contextlib.contextmanager
 def _create_push_context_manager(
     box: Box,
-    pop_callback: t.Callable[[], Box],
-) -> t.Generator[Box, None, None]:
+    pop_callback: Callable[[], Box],
+) -> Generator[Box, None, None]:
     """Create a context manager that calls something on exit."""
     try:
         yield box
@@ -45,7 +47,7 @@ class _CurrentBoxProxy(Box):
     def __init__(self, stack: list[Box]) -> None:
         self._stack = stack
 
-    def __getattribute__(self, name: str) -> t.Any:
+    def __getattribute__(self, name: str) -> Any:
         if name == "_stack":
             return super().__getattribute__(name)
 
@@ -100,7 +102,7 @@ class Stack:
     """
 
     def __init__(self, name: str | None = None) -> None:
-        self._name = name or f"0x{id(t):x}"
+        self._name = name or f"0x{id(self):x}"
         self._stack: list[Box] = []
         self._lock = threading.Lock()
 
@@ -114,7 +116,7 @@ class Stack:
     def __repr__(self) -> str:
         return f"<Stack ({self._name})>"
 
-    def push(self, box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
+    def push(self, box: Box, *, chain: bool = False) -> AbstractContextManager[Box]:
         """Push a :class:`Box` instance to the top of the stack.
 
         Returns a context manager, that will automatically pop the box from the
@@ -165,25 +167,25 @@ class Stack:
 
     def put(
         self,
-        key: t.Hashable,
-        value: t.Any = _unset,
+        key: Hashable,
+        value: Any = _unset,
         *,
-        factory: t.Callable[[], t.Any] | None = None,
+        factory: Callable[[], Any] | None = None,
         scope: type[Scope] | None = None,
     ) -> None:
         """The same as :meth:`Box.put` but for a box at the top of the stack."""
         return self._current_box.put(key, value, factory=factory, scope=scope)
 
-    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
+    def get(self, key: Hashable, default: Any = _unset) -> Any:
         """The same as :meth:`Box.get` but for a box at the top."""
         return self._current_box.get(key, default=default)
 
     def pass_(
         self,
-        key: t.Hashable,
+        key: Hashable,
         *,
         as_: str | None = None,
-    ) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
+    ) -> Callable[[Callable[P, R[T]]], Callable[P, R[T]]]:
         """The same as :meth:`Box.pass_` but for a box at the top."""
         return Box.pass_(self._current_box, key, as_=as_)
 
@@ -191,7 +193,7 @@ class Stack:
 _instance = Stack("shared")
 
 
-def push(box: Box, *, chain: bool = False) -> t.ContextManager[Box]:
+def push(box: Box, *, chain: bool = False) -> AbstractContextManager[Box]:
     """The same as :meth:`Stack.push` but for a shared stack instance.
 
     .. versionadded:: 1.1 ``chain`` parameter
@@ -208,25 +210,25 @@ def pop() -> Box:
 
 
 def put(
-    key: t.Hashable,
-    value: t.Any = _unset,
+    key: Hashable,
+    value: Any = _unset,
     *,
-    factory: t.Callable[[], t.Any] | None = None,
+    factory: Callable[[], Any] | None = None,
     scope: type[Scope] | None = None,
 ) -> None:
     """The same as :meth:`Stack.put` but for a shared stack instance."""
     return _instance.put(key, value, factory=factory, scope=scope)
 
 
-def get(key: t.Hashable, default: t.Any = _unset) -> t.Any:
+def get(key: Hashable, default: Any = _unset) -> Any:
     """The same as :meth:`Stack.get` but for a shared stack instance."""
     return _instance.get(key, default=default)
 
 
 def pass_(
-    key: t.Hashable,
+    key: Hashable,
     *,
     as_: str | None = None,
-) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
+) -> Callable[[Callable[P, R[T]]], Callable[P, R[T]]]:
     """The same as :meth:`Stack.pass_` but for a shared stack instance."""
     return _instance.pass_(key, as_=as_)

@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 import contextvars
-import typing as t
+import typing
 import weakref
 
 import picobox
 
-if t.TYPE_CHECKING:
-    Store = weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
+if typing.TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Hashable, MutableMapping
+    from typing import Any
+
+    Store = weakref.WeakKeyDictionary[picobox.Scope, dict[Hashable, Any]]
     StoreCtxVar = contextvars.ContextVar[Store]
-    ASGIScope = t.MutableMapping[str, t.Any]
-    ASGIMessage = t.MutableMapping[str, t.Any]
-    ASGIReceive = t.Callable[[], t.Awaitable[ASGIMessage]]
-    ASGISend = t.Callable[[ASGIMessage], t.Awaitable[None]]
-    ASGIApplication = t.Callable[[ASGIScope, ASGIReceive, ASGISend], t.Awaitable[None]]
+    ASGIScope = MutableMapping[str, Any]
+    ASGIMessage = MutableMapping[str, Any]
+    ASGIReceive = Callable[[], Awaitable[ASGIMessage]]
+    ASGISend = Callable[[ASGIMessage], Awaitable[None]]
+    ASGIApplication = Callable[[ASGIScope, ASGIReceive, ASGISend], Awaitable[None]]
 
 
 _current_app_store: StoreCtxVar = contextvars.ContextVar(f"{__name__}.current-app-store")
@@ -67,7 +70,7 @@ class _asgiscope(picobox.Scope):
     _store_cvar: StoreCtxVar
 
     @property
-    def _store(self) -> dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[Hashable, Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:
@@ -86,10 +89,10 @@ class _asgiscope(picobox.Scope):
             scope_store = store.setdefault(self, {})
         return scope_store
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         self._store[key] = value
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         return self._store[key]
 
 

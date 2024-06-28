@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import contextvars
-import typing as t
+import typing
 import weakref
 
 import picobox
 
-if t.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
+    from collections.abc import Hashable, Iterable
+    from typing import Any
+
     from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
-    Store = weakref.WeakKeyDictionary[picobox.Scope, t.Dict[t.Hashable, t.Any]]
+    Store = weakref.WeakKeyDictionary[picobox.Scope, dict[Hashable, Any]]
     StoreCtxVar = contextvars.ContextVar[Store]
 
 
@@ -45,7 +48,7 @@ class ScopeMiddleware:
         self,
         environ: WSGIEnvironment,
         start_response: StartResponse,
-    ) -> t.Iterable[bytes]:
+    ) -> Iterable[bytes]:
         """Define scopes and invoke the WSGI application."""
         # Storing the WSGI application's scope state within a ScopeMiddleware
         # instance because it's assumed that each WSGI middleware is typically
@@ -69,7 +72,7 @@ class _wsgiscope(picobox.Scope):
     _store_cvar: StoreCtxVar
 
     @property
-    def _store(self) -> dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[Hashable, Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:
@@ -88,10 +91,10 @@ class _wsgiscope(picobox.Scope):
             scope_store = store.setdefault(self, {})
         return scope_store
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         self._store[key] = value
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         return self._store[key]
 
 

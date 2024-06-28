@@ -44,7 +44,7 @@ dependencies = ["ruff == 0.5.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.type]
-dependencies = ["mypy", "typing-extensions", "flask"]
+dependencies = ["mypy", "flask"]
 scripts.run = ["mypy {args}"]
 
 [tool.hatch.envs.docs]
@@ -68,7 +68,6 @@ known-first-party = ["picobox"]
 "tests/*" = ["D", "S101", "ARG001", "BLE001", "INP001"]
 
 [tool.mypy]
-python_version = "3.8"
 files = ["src"]
 pretty = true
 strict = true
