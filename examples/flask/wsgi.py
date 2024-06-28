@@ -19,4 +19,4 @@ box.put("magic", 12)
 # to test the app since any attempt to override dependencies in tests
 # will fail due to later attempt to push a new box by request hooks.
 picobox.push(box)
-from example import app  # noqa
+from example import app

@@ -5,7 +5,7 @@ import importlib.metadata
 # -- Project settings
 project = "Picobox"
 author = "Ihor Kalnytskyi"
-copyright = "2017, Ihor Kalnytskyi"
+project_copyright = "2017, Ihor Kalnytskyi"
 release = importlib.metadata.version("picobox")
 version = ".".join(release.split(".")[:2])
 

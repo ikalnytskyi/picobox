@@ -40,7 +40,7 @@ scripts.run = "python -m pytest --strict-markers {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
-dependencies = ["ruff == 0.4.*"]
+dependencies = ["ruff == 0.5.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.type]
@@ -55,39 +55,17 @@ scripts.run = "sphinx-build -W -b html docs docs/_build/"
 line-length = 100
 
 [tool.ruff.lint]
-select = [
-  "F",
-  "E",
-  "W",
-  "I",
-  "D",
-  "UP",
-  "S",
-  "FBT",
-  "B",
-  "C4",
-  "DTZ",
-  "T10",
-  "ISC",
-  "PIE",
-  "T20",
-  "PYI",
-  "PT",
-  "RET",
-  "SLF",
-  "SIM",
-  "TCH",
-  "ERA",
-  "RUF",
-]
-ignore = ["D107", "D203", "D213", "D401", "S101", "B904", "ISC001", "PT011", "SIM117"]
+select = ["ALL"]
+ignore = ["ANN", "PLR", "D107", "D203", "D213", "D401", "SIM117", "N801", "PLW2901", "PERF203", "COM812", "ISC001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["picobox"]
 
 [tool.ruff.lint.per-file-ignores]
-"examples/*" = ["I", "D", "T20"]
-"tests/*" = ["D"]
+"docs/*" = ["INP001"]
+"examples/*" = ["I", "D", "T20", "INP001"]
+"examples/flask/wsgi.py" = ["F401", "E402"]
+"tests/*" = ["D", "S101", "ARG001", "BLE001", "INP001"]
 
 [tool.mypy]
 python_version = "3.8"

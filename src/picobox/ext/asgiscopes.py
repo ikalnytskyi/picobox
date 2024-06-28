@@ -1,5 +1,7 @@
 """Scopes for ASGI applications."""
 
+from __future__ import annotations
+
 import contextvars
 import typing as t
 import weakref
@@ -16,8 +18,8 @@ if t.TYPE_CHECKING:
     ASGIApplication = t.Callable[[ASGIScope, ASGIReceive, ASGISend], t.Awaitable[None]]
 
 
-_current_app_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-app-store")
-_current_req_store: "StoreCtxVar" = contextvars.ContextVar(f"{__name__}.current-req-store")
+_current_app_store: StoreCtxVar = contextvars.ContextVar(f"{__name__}.current-app-store")
+_current_req_store: StoreCtxVar = contextvars.ContextVar(f"{__name__}.current-req-store")
 
 
 class ScopeMiddleware:
@@ -35,14 +37,14 @@ class ScopeMiddleware:
     :param app: The ASGI application to wrap.
     """
 
-    def __init__(self, app: "ASGIApplication") -> None:
+    def __init__(self, app: ASGIApplication) -> None:
         self.app = app
         # Since we want stored objects to be garbage collected as soon as the
         # storing scope instance is destroyed, scope instances have to be
         # weakly referenced.
         self.store: Store = weakref.WeakKeyDictionary()
 
-    async def __call__(self, scope: "ASGIScope", receive: "ASGIReceive", send: "ASGISend") -> None:
+    async def __call__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
         """Define scopes and invoke the ASGI application."""
         # Storing the ASGI application's scope state within a ScopeMiddleware
         # instance because it's assumed that each ASGI middleware is typically
@@ -62,20 +64,21 @@ class ScopeMiddleware:
 class _asgiscope(picobox.Scope):
     """A base class for ASGI scopes."""
 
-    _store_cvar: "StoreCtxVar"
+    _store_cvar: StoreCtxVar
 
     @property
-    def _store(self) -> t.Dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[t.Hashable, t.Any]:
         try:
             store = self._store_cvar.get()
         except LookupError:
-            raise RuntimeError(
+            error_message = (
                 "Working outside of ASGI context.\n"
                 "\n"
                 "This typically means that you attempted to use picobox with "
                 "ASGI scopes, but 'picobox.ext.asgiscopes.ScopeMiddleware' has "
                 "not been used with your ASGI application."
             )
+            raise RuntimeError(error_message) from None
 
         try:
             scope_store = store[self]
