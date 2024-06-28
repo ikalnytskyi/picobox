@@ -4,6 +4,7 @@ import abc
 import contextvars as _contextvars
 import threading
 import typing as t
+import weakref
 
 
 class Scope(metaclass=abc.ABCMeta):
@@ -76,15 +77,22 @@ class contextvars(Scope):
     .. versionadded:: 2.1
     """
 
-    def __init__(self) -> None:
-        self._store: t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]] = {}
+    _store_obj: (
+        "weakref.WeakKeyDictionary[Scope, t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]]]"
+    )
+    _store_obj = weakref.WeakKeyDictionary()
+
+    @property
+    def _store(self) -> t.Dict[t.Hashable, _contextvars.ContextVar[t.Any]]:
+        try:
+            scope_store = self._store_obj[self]
+        except KeyError:
+            scope_store = self._store_obj[self] = {}
+        return scope_store
 
     def set(self, key: t.Hashable, value: t.Any) -> None:
-        try:
-            var = self._store[key]
-        except KeyError:
-            var = self._store[key] = _contextvars.ContextVar("picobox")
-        var.set(value)
+        self._store[key] = _contextvars.ContextVar(str(key))
+        self._store[key].set(value)
 
     def get(self, key: t.Hashable) -> t.Any:
         try:
