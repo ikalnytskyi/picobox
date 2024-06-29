@@ -2,27 +2,29 @@
 
 from __future__ import annotations
 
-import typing as t
+import typing
 import weakref
 
 import flask
 
 import picobox
 
-if t.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
+    from collections.abc import Hashable
+    from typing import Any
 
-    class _flask_store_obj(t.Protocol):
-        __dependencies__: weakref.WeakKeyDictionary[picobox.Scope, dict[t.Hashable, t.Any]]
+    class _flask_store_obj(typing.Protocol):
+        __dependencies__: weakref.WeakKeyDictionary[picobox.Scope, dict[Hashable, Any]]
 
 
 class _flaskscope(picobox.Scope):
     """A base class for Flask scopes."""
 
     def __init__(self, store_obj: object) -> None:
-        self._store_obj = t.cast("_flask_store_obj", store_obj)
+        self._store_obj = typing.cast("_flask_store_obj", store_obj)
 
     @property
-    def _store(self) -> dict[t.Hashable, t.Any]:
+    def _store(self) -> dict[Hashable, Any]:
         try:
             store = self._store_obj.__dependencies__
         except AttributeError:
@@ -34,10 +36,10 @@ class _flaskscope(picobox.Scope):
             scope_store = store.setdefault(self, {})
         return scope_store
 
-    def set(self, key: t.Hashable, value: t.Any) -> None:
+    def set(self, key: Hashable, value: Any) -> None:
         self._store[key] = value
 
-    def get(self, key: t.Hashable) -> t.Any:
+    def get(self, key: Hashable) -> Any:
         return self._store[key]
 
 

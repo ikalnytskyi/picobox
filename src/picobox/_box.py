@@ -5,16 +5,17 @@ from __future__ import annotations
 import functools
 import inspect
 import threading
-import typing as t
+import typing
 
 from . import _scopes
 
-if t.TYPE_CHECKING:
-    import typing_extensions
+if typing.TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Hashable
+    from typing import Any, ParamSpec, TypeVar, Union
 
-    P = typing_extensions.ParamSpec("P")
-    T = typing_extensions.TypeVar("T")
-    R = t.Union[T, t.Awaitable[T]]
+    P = ParamSpec("P")
+    T = TypeVar("T")
+    R = Union[T, Awaitable[T]]
 
 # Missing is a special sentinel object that's used to indicate a value is
 # missing when "None" is a valid input. It's important to use a good name
@@ -50,16 +51,16 @@ class Box:
     """
 
     def __init__(self) -> None:
-        self._store: dict[t.Hashable, tuple[_scopes.Scope, t.Callable[[], t.Any]]] = {}
+        self._store: dict[Hashable, tuple[_scopes.Scope, Callable[[], Any]]] = {}
         self._scope_instances: dict[type[_scopes.Scope], _scopes.Scope] = {}
         self._lock = threading.RLock()
 
     def put(
         self,
-        key: t.Hashable,
-        value: t.Any = _unset,
+        key: Hashable,
+        value: Any = _unset,
         *,
-        factory: t.Callable[[], t.Any] | None = None,
+        factory: Callable[[], Any] | None = None,
         scope: type[_scopes.Scope] | None = None,
     ) -> None:
         """Define a dependency (aka service) within the box instance.
@@ -93,7 +94,7 @@ class Box:
             error_message = "Box.put() takes 'scope' when 'factory' provided"
             raise TypeError(error_message)
 
-        def _factory() -> t.Any:
+        def _factory() -> Any:
             return value
 
         factory = factory or _factory
@@ -129,7 +130,7 @@ class Box:
         with self._lock:
             self._store[key] = (scope_instance, factory)
 
-    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
+    def get(self, key: Hashable, default: Any = _unset) -> Any:
         """Retrieve a dependency (aka service) out of the box instance.
 
         The process involves creation of requested dependency by calling an
@@ -171,10 +172,10 @@ class Box:
 
     def pass_(
         self,
-        key: t.Hashable,
+        key: Hashable,
         *,
         as_: str | None = None,
-    ) -> t.Callable[[t.Callable[P, R[T]]], t.Callable[P, R[T]]]:
+    ) -> Callable[[Callable[P, R[T]]], Callable[P, R[T]]]:
         r"""Pass a dependency to a function if nothing explicitly passed.
 
         The decorator implements late binding which means it does not require
@@ -190,7 +191,7 @@ class Box:
         :raises KeyError: If no dependencies saved under `key` in the box.
         """
 
-        def decorator(fn: t.Callable[P, R[T]]) -> t.Callable[P, R[T]]:
+        def decorator(fn: Callable[P, R[T]]) -> Callable[P, R[T]]:
             # If pass_ decorator is called second time (or more), we can squash
             # the calls into one and reduce runtime costs of injection.
             if hasattr(fn, "__dependencies__"):
@@ -218,7 +219,8 @@ class Box:
 
                 @functools.wraps(fn)
                 async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    return await t.cast(t.Awaitable["T"], fn_with_dependencies(*args, **kwargs))
+                    coroutine = fn_with_dependencies(*args, **kwargs)
+                    return await typing.cast(typing.Awaitable["T"], coroutine)
             else:
                 wrapper = fn_with_dependencies  # type: ignore[assignment]
 
@@ -266,16 +268,16 @@ class ChainBox(Box):
 
     def put(
         self,
-        key: t.Hashable,
-        value: t.Any = _unset,
+        key: Hashable,
+        value: Any = _unset,
         *,
-        factory: t.Callable[[], t.Any] | None = None,
+        factory: Callable[[], Any] | None = None,
         scope: type[_scopes.Scope] | None = None,
     ) -> None:
         """Same as :meth:`Box.put` but applies to first underlying box."""
         return self._boxes[0].put(key, value, factory=factory, scope=scope)
 
-    def get(self, key: t.Hashable, default: t.Any = _unset) -> t.Any:
+    def get(self, key: Hashable, default: Any = _unset) -> Any:
         """Same as :meth:`Box.get` but looks up for key in underlying boxes."""
         for box in self._boxes:
             try:
