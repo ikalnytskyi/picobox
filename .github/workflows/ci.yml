@@ -17,6 +17,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Run lints
         run: python3 -m pip install hatch && hatch run lint:run
@@ -36,6 +37,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
       - name: Run pytest
         run: python3 -m pip install hatch && hatch run test:run
@@ -50,6 +52,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Run lints
         run: python3 -m pip install hatch && hatch run type:run
@@ -64,6 +67,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Run sphinx
         run: python3 -m pip install hatch && hatch run docs:run
