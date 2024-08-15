@@ -6,27 +6,27 @@ import pytest
 from picobox.ext import flaskscopes
 
 
-@pytest.fixture()
+@pytest.fixture
 def appscope():
     return flaskscopes.application()
 
 
-@pytest.fixture()
+@pytest.fixture
 def reqscope():
     return flaskscopes.request()
 
 
-@pytest.fixture()
+@pytest.fixture
 def flaskapp():
     return flask.Flask("test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def appcontext(flaskapp):
     return flaskapp.app_context
 
 
-@pytest.fixture()
+@pytest.fixture
 def reqcontext(flaskapp):
     return flaskapp.test_request_context
 

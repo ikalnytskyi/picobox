@@ -500,7 +500,7 @@ def test_stack_pass_method(boxclass, teststack, args, kwargs, rv):
         assert Foo(*args, **kwargs).x == rv
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("args", "kwargs", "rv"),
     [
@@ -627,7 +627,7 @@ def test_stack_pass_optimization_complex(request, boxclass, teststack):
         assert len(fn()) == 3
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_stack_pass_optimization_async(request, boxclass, teststack):
     testbox = boxclass()
     testbox.put("a", 1)

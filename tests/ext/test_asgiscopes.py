@@ -62,7 +62,7 @@ def connection_type(request):
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def app_factory(connection_type):
     """A factory that creates test application instances."""
 
@@ -94,7 +94,7 @@ def app_factory(connection_type):
     return factory
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_factory(connection_type):
     """A factory that creates synchronous test client instances."""
 
@@ -104,7 +104,7 @@ def client_factory(connection_type):
     return factory
 
 
-@pytest.fixture()
+@pytest.fixture
 def asyncclient_factory(connection_type):
     """A factory that creates asynchronous test client instances."""
 
@@ -384,7 +384,7 @@ def test_scope_application_is_application_bound(app_factory, client_factory):
     client2.run_endpoint("/2")
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_scope_request_is_request_bound(app_factory, asyncclient_factory):
     scope = asgiscopes.request()
     value = object()

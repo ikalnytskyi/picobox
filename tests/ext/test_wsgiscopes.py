@@ -43,7 +43,7 @@ def run_in_thread(function, *args, **kwargs):
     return closure["ret"]
 
 
-@pytest.fixture()
+@pytest.fixture
 def app_factory():
     """A factory that creates test application instances."""
 
@@ -69,7 +69,7 @@ def app_factory():
     return factory
 
 
-@pytest.fixture()
+@pytest.fixture
 def client_factory():
     """A factory that creates test client instances."""
 
