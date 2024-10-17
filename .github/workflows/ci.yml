@@ -16,7 +16,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Run lints
         run: python3 -m pip install hatch && hatch run lint:run
@@ -25,7 +25,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
+        exclude:
+          # The job hangs for some reason during tests execution. :(
+          - os: macos-latest
+            python-version: pypy-3.10
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -49,7 +53,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Run lints
         run: python3 -m pip install hatch && hatch run type:run
@@ -63,7 +67,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Run sphinx
         run: python3 -m pip install hatch && hatch run docs:run
