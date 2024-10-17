@@ -381,6 +381,10 @@ Release Notes
 
 (unreleased)
 
+* Add ``Python 3.13`` support.
+
+* Drop ``Python 3.8`` support. It reached its end-of-life recently.
+
 * Add ``picobox.ext.wsgiscopes`` extensions with ``application`` and ``request``
   scopes for WSGI applications.
 
