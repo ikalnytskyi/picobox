@@ -275,7 +275,7 @@ are done with it.
     picobox provides a :class:`picobox.Stack` class to create an independent
     non overlapping stack with boxes suitable to be used in such cases.
 
-    Just create a global instance of stack (globals themeselves aren't bad),
+    Just create a global instance of stack (globals themselves aren't bad),
     and use it as you'd use picobox stacked interface:
 
     .. code:: python
