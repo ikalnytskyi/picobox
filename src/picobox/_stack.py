@@ -130,7 +130,7 @@ class Stack:
             this option set to ``True``.
         """
         # list.append() is a thread-safe operation in CPython, yet the safety
-        # is not guranteed by the language itself. So the lock is used here to
+        # is not guaranteed by the language itself. So the lock is used here to
         # ensure the code works properly even when running on alternative
         # implementations.
         with self._lock:
@@ -156,7 +156,7 @@ class Stack:
         :raises IndexError: If the stack is empty and there's nothing to pop.
         """
         # list.append() is a thread-safe operation in CPython, yet the safety
-        # is not guranteed by the language itself. So the lock is used here to
+        # is not guaranteed by the language itself. So the lock is used here to
         # ensure the code works properly even when running on alternative
         # implementations.
         with self._lock:
