@@ -8,17 +8,27 @@ on:
 jobs:
   pypi:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/picobox/${{ github.ref_name }}/
+    permissions:
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare artifacts
-        run: |
-          pipx run -- hatch build
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup build dependencies
+        run: pip install build
+
+      - name: Build package
+        run: python -m build
 
       - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          pipx run -- twine upload dist/*
+        uses: pypa/gh-action-pypi-publish@93e87954aa8d40d7467c30656ba421aee00d37c8
+        with:
+          print-hash: true
