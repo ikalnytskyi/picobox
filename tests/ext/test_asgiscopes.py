@@ -1,6 +1,7 @@
 """Test ASGI scopes."""
 
 import asyncio
+import sys
 
 import async_asgi_testclient
 import pytest
@@ -97,6 +98,9 @@ def app_factory(connection_type):
 @pytest.fixture
 def client_factory(connection_type):
     """A factory that creates synchronous test client instances."""
+
+    if connection_type == "websocket" and sys.implementation.name == "pypy":
+        pytest.skip("When running on PyPy, the websocket tests sometimes hang.")
 
     def factory(app):
         return ClientFacade(app, connection_type)
