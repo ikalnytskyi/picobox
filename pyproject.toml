@@ -35,12 +35,19 @@ Bugs = "https://github.com/ikalnytskyi/picobox/issues"
 source = "vcs"
 
 [tool.hatch.envs.test]
-dependencies = ["pytest", "pytest-asyncio", "flask", "starlette", "httpx", "async-asgi-testclient"]
+dependencies = [
+  "async-asgi-testclient",
+  "flask",
+  "httpx",
+  "pytest",
+  "pytest-asyncio",
+  "starlette",
+]
 scripts.run = "python -m pytest --strict-markers {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
-dependencies = ["ruff == 0.7.*"]
+dependencies = ["ruff == 0.9.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.type]
@@ -56,13 +63,43 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN", "PLR", "D107", "D203", "D213", "D401", "SIM117", "N801", "PLW2901", "PERF203", "COM812", "ISC001"]
+ignore = [
+  "ANN401",
+  "COM812",
+  "D107",
+  "D203",
+  "D213",
+  "D401",
+  "PERF203",
+  "PLR",
+  "PLW2901",
+  "SIM117",
+]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = [
+  "_asgiscope",
+  "_flask_store_obj",
+  "_flaskscope",
+  "_wsgiscope",
+  "application",
+  "contextvars",
+  "namespacescope",
+  "noscope",
+  "request",
+  "singleton",
+  "threadlocal",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*" = ["INP001"]
-"examples/*" = ["I", "D", "T20", "INP001"]
+"examples/*" = ["ANN", "I", "D", "T20", "INP001"]
 "examples/flask/wsgi.py" = ["F401", "E402"]
-"tests/*" = ["D", "S101", "ARG001", "BLE001", "INP001"]
+"tests/*" = ["ANN", "D", "S101", "ARG001", "BLE001", "INP001"]
+
 
 [tool.mypy]
 files = ["src"]

@@ -9,6 +9,7 @@ import typing
 
 from . import _scopes
 
+
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Hashable
     from typing import Any, ParamSpec, TypeVar, Union

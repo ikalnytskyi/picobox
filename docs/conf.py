@@ -2,6 +2,7 @@
 
 import importlib.metadata
 
+
 # -- Project settings
 project = "Picobox"
 author = "Ihor Kalnytskyi"
