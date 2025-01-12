@@ -8,6 +8,7 @@ import threading
 import typing
 import weakref
 
+
 if typing.TYPE_CHECKING:
     from collections.abc import Hashable
     from typing import Any

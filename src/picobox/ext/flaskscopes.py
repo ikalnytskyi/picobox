@@ -9,6 +9,7 @@ import flask
 
 import picobox
 
+
 if typing.TYPE_CHECKING:
     from collections.abc import Hashable
     from typing import Any

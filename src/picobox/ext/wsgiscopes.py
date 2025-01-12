@@ -8,6 +8,7 @@ import weakref
 
 import picobox
 
+
 if typing.TYPE_CHECKING:
     from collections.abc import Hashable, Iterable
     from typing import Any

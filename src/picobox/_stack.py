@@ -8,6 +8,7 @@ import typing
 
 from ._box import Box, ChainBox, _unset
 
+
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Generator, Hashable
     from contextlib import AbstractContextManager
