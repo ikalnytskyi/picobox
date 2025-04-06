@@ -221,7 +221,7 @@ class Box:
                 @functools.wraps(fn)
                 async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                     coroutine = fn_with_dependencies(*args, **kwargs)
-                    return await typing.cast(typing.Awaitable["T"], coroutine)
+                    return await typing.cast("typing.Awaitable[T]", coroutine)
             else:
                 wrapper = fn_with_dependencies  # type: ignore[assignment]
 

@@ -47,7 +47,7 @@ scripts.run = "python -m pytest --strict-markers {args:-vv}"
 
 [tool.hatch.envs.lint]
 detached = true
-dependencies = ["ruff == 0.9.*"]
+dependencies = ["ruff == 0.11.*"]
 scripts.run = ["ruff check {args:.}", "ruff format --check --diff {args:.}"]
 
 [tool.hatch.envs.type]
